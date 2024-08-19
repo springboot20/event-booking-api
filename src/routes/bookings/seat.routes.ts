@@ -16,13 +16,13 @@ router.route("/search-available-seats/:seatId").get(controllers.searchForAvailab
 router.route("/user-seats/:seatId").get(controllers.fetchSeatsAssociatedWithUser);
 
 router
-  .route("/seatnumber/add-new-seat")
+  .route("/seat-numbers/add-new-seat-number")
   .post(checkUserPermissions(ROLE.ADMIN), controllers.addNewSeat);
 
-router.route("/seatnumber").get(controllers.getAllSeatNumbers);
+router.route("/seat-numbers").get(controllers.getAllSeatNumbers);
 
 router
-  .route("/seatnumber/:id")
+  .route("/seat-numbers/:id")
   .patch(checkUserPermissions(ROLE.ADMIN), controllers.updateSeatNumber)
   .delete(checkUserPermissions(ROLE.ADMIN), controllers.deleteSeatNumber);
 

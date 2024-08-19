@@ -8,7 +8,6 @@ const seatSchema = new Schema(
     },
     seatNumbers: {
       type: [{ type: Schema.Types.ObjectId, ref: "SeatNumber" }],
-      default: [],
     },
     reservedBy: {
       type: Schema.Types.ObjectId,

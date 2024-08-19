@@ -147,6 +147,7 @@ const searchForAvailableSeats = asyncHandler(async (req: Request, res: Response)
     {
       $project: {
         seatNumbers: 1,
+        seatNumber: 1,
       },
     },
     {
@@ -164,7 +165,6 @@ const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res
     {
       $match: {
         reservedBy: req.user!._id,
-        isBooked: true,
       },
     },
     ...seatPipeLineAggregation(),
