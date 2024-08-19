@@ -1,24 +1,26 @@
-import { model, Schema } from 'mongoose';
+import { model, Schema } from "mongoose";
 
 const seatSchema = new Schema(
   {
     seatNumber: {
-      type: Number,
-      require: true,
-      unique:true
+      type: Schema.Types.ObjectId,
+      ref: "SeatNumber",
+    },
+    seatNumbers: {
+      type: [{ type: Schema.Types.ObjectId, ref: "SeatNumber" }],
+      default: [],
     },
     reservedBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     isBooked: {
       type: Boolean,
       default: false,
     },
-    event:{
-      type:Schema.Types.ObjectId,
-      ref:"Event",
-      unique:true
+    event: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
     },
     reservedAt: {
       type: Date,
@@ -27,8 +29,25 @@ const seatSchema = new Schema(
       type: Date,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-const seatModel = model('Seat', seatSchema);
-export { seatModel };
+const seatNumberSchema = new Schema({
+  number: {
+    type: Number,
+    required: true,
+  },
+  section: {
+    type: String,
+    required: true,
+  },
+  row: {
+    type: String,
+    required: true,
+  },
+});
+
+const seatModel = model("Seat", seatSchema);
+const seatNumberModel = model("SeatNumber", seatNumberSchema);
+
+export { seatModel, seatNumberModel };

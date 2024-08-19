@@ -52,27 +52,82 @@ const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
   ];
 };
 
-const reserveSeat = asyncHandler(
+const reserveASeat = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
       const { eventId } = req.params;
-      const { seatNumber, reservedAt, reservationExpiresAt } = req.body;
+      const { seatNumberId, reservedAt } = req.body;
 
-      const isBooked = await seatModel.findOne({ isBooked: true });
+      let reservationTime = 20 * 60 * 1000;
 
-      if (isBooked) throw new ApiError(StatusCodes.CONFLICT, "seat has been booked");
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + reservationTime);
+
+      const bookedSeat = await seatModel.find({
+        isBooked: false,
+        event: eventId,
+        seatNumber: seatNumberId,
+      });
+
+      if (!bookedSeat)
+        throw new ApiError(StatusCodes.CONFLICT, "seat has already resvered or booked");
 
       const seat = await seatModel.create({
         reservedBy: req.user?._id,
-        seatNumber,
+        seatNumber: seatNumberId,
         reservedAt,
-        eventId,
-        reservationExpiresAt,
+        event: eventId,
+        reservationExpiresAt: expiresAt,
       });
 
       await seat.save({ session });
 
       return new ApiResponse(StatusCodes.OK, { seat }, "Seat booked successfully");
+    },
+  ),
+);
+
+const reserveSeats = asyncHandler(
+  withTransactions(
+    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
+      const { eventId } = req.params;
+      const { seatNumbers, reservedAt } = req.body;
+
+      let reservationTime = 20 * 60 * 1000;
+
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + reservationTime);
+
+      const seats = await Promise.all(
+        seatNumbers.map(async (seatNumber: string) => {
+          return seatModel.findOne({
+            isBooked: false,
+            event: eventId,
+            seatNumbers: { $in: seatNumber },
+            $or: [
+              {
+                reservedAt: { $exists: false },
+                reservationExpiresAt: { $lt: now },
+              },
+            ],
+          });
+        }),
+      );
+
+      if (seats.length !== seatNumbers.length)
+        throw new ApiError(StatusCodes.CONFLICT, "Some seats has already resvered or booked");
+
+      const new_seats = await seatModel.create({
+        reservedBy: req.user?._id,
+        seatNumbers,
+        reservedAt,
+        event: eventId,
+        reservationExpiresAt: expiresAt,
+      });
+
+      await new_seats.save({ session });
+
+      return new ApiResponse(StatusCodes.OK, { seats: new_seats }, "Seat booked successfully");
     },
   ),
 );
@@ -91,7 +146,7 @@ const searchForAvailableSeats = asyncHandler(async (req: Request, res: Response)
     },
     {
       $project: {
-        seatNumber: 1,
+        seatNumbers: 1,
       },
     },
     {
@@ -108,7 +163,7 @@ const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res
   const userSeatsAggregate = await seatModel.aggregate([
     {
       $match: {
-        owner: req.user!._id,
+        reservedBy: req.user!._id,
         isBooked: true,
       },
     },
@@ -123,4 +178,4 @@ const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res
   return new ApiResponse(StatusCodes.OK, { userSeats: userSeatsAggregate }, "User events fetched");
 });
 
-export { reserveSeat, searchForAvailableSeats, fetchSeatsAssociatedWithUser };
+export { reserveSeats, reserveASeat, searchForAvailableSeats, fetchSeatsAssociatedWithUser };
