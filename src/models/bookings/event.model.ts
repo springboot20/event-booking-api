@@ -52,7 +52,7 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
 
 const eventModel = model<EventSchema>("Event", eventSchema);
 
-eventSchema.plugin(mongooseAggregatePaginate)
+eventSchema.plugin(mongooseAggregatePaginate);
 
 eventSchema.pre("deleteMany", async function (next) {
   await bookingModel.deleteMany({ event: this });

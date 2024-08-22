@@ -13,17 +13,29 @@ const bookingSchema = new Schema(
       ref: "User",
       required: true,
     },
-    event: {
-      type: {
-        type: Schema.Types.ObjectId,
-        ref: "Event",
-      },
-    },
-    seats: {
+
+    bookingItems: {
       type: [
         {
-          type: Types.ObjectId,
-          ref: "Seat",
+          // seats: {
+          //   type: [
+          //     {
+          //       type: Types.ObjectId,
+          //       ref: "Seat",
+          //     },
+          //   ],
+          //   default: [],
+          // },
+          ticket: {
+            type: Number,
+            required: true,
+            min: [1, "ticket must not less than 1"],
+            default: 1,
+          },
+          eventId: {
+            type: Schema.Types.ObjectId,
+            ref: "Event",
+          },
         },
       ],
       default: [],
