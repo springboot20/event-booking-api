@@ -2,6 +2,7 @@ import { Schema, model, Model } from "mongoose";
 import { EventSchema } from "src/types/model/bookings";
 import { bookingModel } from "./booking.model";
 import { seatModel } from "./seat.model";
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
   {
@@ -50,6 +51,8 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
 );
 
 const eventModel = model<EventSchema>("Event", eventSchema);
+
+eventSchema.plugin(mongooseAggregatePaginate)
 
 eventSchema.pre("deleteMany", async function (next) {
   await bookingModel.deleteMany({ event: this });
