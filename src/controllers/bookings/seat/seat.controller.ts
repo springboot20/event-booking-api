@@ -64,7 +64,7 @@ const reserveASeat = asyncHandler(
       const expiresAt = new Date(now.getTime() + reservationTime);
 
       const bookedSeat = await seatModel.find({
-        isBooked: false,
+        isReserved: false,
         event: eventId,
         seatNumber: seatNumberId,
       });
@@ -77,6 +77,7 @@ const reserveASeat = asyncHandler(
         seatNumber: seatNumberId,
         reservedAt,
         event: eventId,
+        isReserved: true,
         reservationExpiresAt: expiresAt,
       });
 
@@ -101,7 +102,7 @@ const reserveSeats = asyncHandler(
       const seats = await Promise.all(
         seatNumbers.map(async (seatNumber: string) => {
           return seatModel.findOne({
-            isBooked: false,
+            isReserved: false,
             event: eventId,
             seatNumbers: { $in: seatNumber },
             $or: [
@@ -122,6 +123,7 @@ const reserveSeats = asyncHandler(
         seatNumbers,
         reservedAt,
         event: eventId,
+        isReserved: true,
         reservationExpiresAt: expiresAt,
       });
 

@@ -13,7 +13,7 @@ const seatSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
-    isBooked: {
+    isReserved: {
       type: Boolean,
       default: false,
     },
