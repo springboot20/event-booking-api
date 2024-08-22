@@ -6,10 +6,11 @@ const router = express.Router();
 
 router.use(verifyJWT);
 
-router.route("/?eventId=eventId&seatId=seatId").post(controllers.bookEvent);
+router
+  .route("/item/:eventId")
+  .post(controllers.bookEvent)
+  .delete(controllers.removeEventItemFromBooking);
 
-router.route("/:bookingId").put(controllers.updateBooking);
-
-// router.route('/');
+router.route("/").get(controllers.getUserBooking);
 
 export { router };
