@@ -1,4 +1,4 @@
-import {  Response } from "express";
+import { Response } from "express";
 import mongoose from "mongoose";
 import { bookingModel } from "../../../models/bookings/booking.model";
 import { eventModel } from "../../../models/bookings/event.model";
