@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { seatNumberModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { ApiError } from "../../../utils/ApiError";
