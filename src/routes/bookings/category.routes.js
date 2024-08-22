@@ -4,10 +4,7 @@ import { verifyJWT } from "../../middlewares/auth.middleware";
 
 const router = express.Router();
 
-router
-  .route("/")
-  .post(verifyJWT, controllers.addEventCategory)
-  .get(controllers.searchForAvailableCategories);
+router.route("/").post(verifyJWT, controllers.addEventCategory).get(controllers.getAllCategories);
 
 router
   .route("/:categoryId")

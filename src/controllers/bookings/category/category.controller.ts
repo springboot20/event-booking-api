@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { eventCategory } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { ApiError } from "../../../utils/ApiError";
@@ -22,27 +21,24 @@ export const addEventCategory = asyncHandler(async (req: CustomRequest, res: Res
   return new ApiResponse(StatusCodes.CREATED, { newCategory }, "new category added");
 });
 
-export const searchForAvailableCategories = asyncHandler(async (req: Request, res: Response) => {
-  const availableCategory = await eventCategory.aggregate([
-    {
-      $match: {},
-    },
-    {
-      $project: {
-        name: 1,
-      },
-    },
-  ]);
-
-  return new ApiResponse(StatusCodes.OK, { availableCategory }, "available event category fetched");
-});
-
 export const getCategoryById = asyncHandler(async (req: Request, res: Response) => {
   const { categoryId } = req.params;
 
   const category = await eventCategory.findById(categoryId);
 
   if (!category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exists");
+
+  return new ApiResponse(StatusCodes.OK, { category }, "category fetched");
+});
+
+export const getAllCategories = asyncHandler(async (req: Request, res: Response) => {
+  const category = await eventCategory.find({});
+
+  if (!category)
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "something went wrong while fetching categories",
+    );
 
   return new ApiResponse(StatusCodes.OK, { category }, "category fetched");
 });

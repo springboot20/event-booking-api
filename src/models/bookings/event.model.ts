@@ -27,23 +27,23 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
     },
     eventDate: {
       type: Date,
-      required:true
+      required: true,
     },
-    time:{
-      type:{
-        from:Date,
-        to:Date,
-      }
+    time: {
+      type: {
+        from: Date,
+        to: Date,
+      },
     },
-    category:{
-      type:Schema.Types.ObjectId,
-      ref:"Category",
-      required:true
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
     },
     capacity: {
       type: Number,
       required: false,
-      default:0
+      default: 0,
     },
   },
   { timestamps: true },

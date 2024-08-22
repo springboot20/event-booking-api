@@ -17,7 +17,7 @@ router.route("/forgot-password/").post(controllers.forgotPassword);
 
 router.route("/send-email/").post(controllers.sendEmail);
 
-router.route("/verify-email/:token").post(controllers.verifyEmail);
+router.route("/verify-email/:id/:token").post(controllers.verifyEmail);
 
 router.route("/reset-password/:resetToken").post(controllers.resetPassword);
 

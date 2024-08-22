@@ -76,40 +76,37 @@ export const sendEmail = asyncHandler(
   }),
 );
 
-export const verifyEmail = asyncHandler(
-  withTransactions(async (req: Request, res: Response, session: mongoose.mongo.ClientSession) => {
-    const { token, id } = req.params;
+export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { id, token } = req.params;
 
-    if (!token) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, "verification token is missing", []);
-    }
+  if (!token) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "verification token is missing", []);
+  }
 
-    const user = await userModel.findOne({
-      _id: id,
-      emailVerificationExpiry: { $gte: Date.now() },
-    })!;
+  const user = await userModel.findOne({
+    _id: id,
+    emailVerificationExpiry: { $gte: Date.now() },
+  })!;
 
-    if (!user)
-      throw new ApiError(
-        StatusCodes.UNAUTHORIZED,
-        "unable to verify user, token invalid or expired",
-      );
+  console.log(user);
 
-    const validToken = await bcrypt.compare(token, user?.emailVerificationToken!);
+  if (!user)
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "unable to verify user, token invalid or expired");
 
-    if (!validToken)
-      throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset password token provided");
+  const validToken = await bcrypt.compare(token, user?.emailVerificationToken!);
 
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpiry = undefined;
+  if (!validToken)
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset password token provided");
 
-    user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpiry = undefined;
 
-    await user.save({ validateBeforeSave: false, session });
+  user.isEmailVerified = true;
 
-    return new ApiResponse(StatusCodes.OK, { isEmailVerified: true }, "Email verified");
-  }),
-);
+  await user.save({ validateBeforeSave: false });
+
+  return new ApiResponse(StatusCodes.OK, { isEmailVerified: true }, "Email verified");
+});
 
 export const resendEmailVerification = asyncHandler(
   async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {

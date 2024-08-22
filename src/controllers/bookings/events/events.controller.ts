@@ -12,27 +12,6 @@ const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
     {
       $lookup: {
-        from: "users",
-        foreignField: "_id",
-        localField: "owner",
-        as: "user",
-        pipeline: [
-          {
-            $project: {
-              password: 0,
-              refreshToken: 0,
-              forgotPasswordToken: 0,
-              forgotPasswordExpiry: 0,
-              emailVerificationToken: 0,
-              emailVerificationExpiry: 0,
-              loginType: 0,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $lookup: {
         from: "categories",
         foreignField: "_id",
         localField: "category",
@@ -67,7 +46,7 @@ const createEvent = asyncHandler(
 
       if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
 
-      const newEvent = await eventModel.create({
+      const createdEvent = await eventModel.create({
         title,
         owner,
         description,
@@ -82,20 +61,9 @@ const createEvent = asyncHandler(
         capacity,
       });
 
-      await newEvent.save({ session });
+      await createdEvent.save({ session });
 
-      const createdEvent = await eventModel.aggregate([
-        {
-          $match: {
-            _id: newEvent._id,
-          },
-        },
-        ...pipelineAggregation(),
-      ]);
-
-      const eventPayload = createdEvent[0];
-
-      if (!eventPayload) {
+      if (!createdEvent) {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
       }
 
@@ -108,32 +76,14 @@ const createEvent = asyncHandler(
   ),
 );
 
-const fetchEventsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
-  const userEventAggregate = await eventModel.aggregate([
-    {
-      $match: {
-        owner: req.user?._id,
-      },
-    },
-    {
-      $sort: {
-        updatedAt: -1,
-      },
-    },
-    ...pipelineAggregation(),
-  ]);
-
-  return new ApiResponse(StatusCodes.OK, { userEvents: userEventAggregate }, "User events fetched");
-});
-
 const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { eventId } = req.params;
+  const { title } = req.body;
 
   const availableEvents = await eventModel.aggregate([
     {
       $match: {
-        _id: {
-          $ne: new mongoose.Types.ObjectId(eventId),
+        title: {
+          $eq: title,
         },
       },
     },
@@ -167,7 +117,7 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
   return new ApiResponse(StatusCodes.OK, { events }, "all events fetched");
 });
 
-const getEventByCategory = asyncHandler(async (req: Request, res: Response) => {
+const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => {
   const { categoryId } = req.params;
 
   const category = await eventCategory.findById(categoryId).select("name _id");
@@ -190,6 +140,16 @@ const getEventByCategory = asyncHandler(async (req: Request, res: Response) => {
   ]);
 
   return new ApiResponse(StatusCodes.OK, { category: event_category }, "Available events fetched");
+});
+
+const getEventById = asyncHandler(async (req: Request, res: Response) => {
+  const { eventId } = req.params;
+
+  const event = await eventCategory.findById(eventId);
+
+  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
+
+  return new ApiResponse(StatusCodes.OK, { event }, "Available events fetched");
 });
 
 const updateEvent = asyncHandler(
@@ -229,11 +189,11 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
 });
 
 export {
-  getEventByCategory,
-  createEvent,
-  deleteEvent,
   getAllEvents,
-  fetchEventsAssociatedWithUser,
+  createEvent,
   updateEvent,
+  getEventById,
+  getEventsByCategory,
+  deleteEvent,
   searchForAvailableEvents,
 };
