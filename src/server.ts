@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cors from "cors";
 import express from "express";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
@@ -38,6 +39,7 @@ app.use(
 
 app.use(cookieParser(process.env.EXPRESS_SESSION_SECRET));
 
+app.use(cors());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json());
@@ -56,10 +58,8 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   res.setHeader("Access-Control-Allow-Headers", "*");
 
-
   next();
 });
-
 
 app.listen(PORT, () => {
   console.log(`🌟🌟 Server running at port http://localhost:${PORT} ⚡⚡`);
@@ -70,7 +70,6 @@ connectToDatabase();
 
 // Error handler middleware
 app.use(errorHandler);
-
 
 httpServer.on("error", function (error) {
   if (error?.message === "EADDRINUSE") {
