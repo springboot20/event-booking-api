@@ -9,9 +9,9 @@ router.use(verifyJWT);
 
 router.route("/book-seat/:eventId").post(controllers.reserveASeat);
 
-router.route("/book-seats/:eventId").post(controllers.reserveSeats);
+router.route("/").get(controllers.getAllSeats);
 
-router.route("/search-available-seats/:seatId").get(controllers.searchForAvailableSeats);
+router.route("/book-seats/:eventId").post(controllers.reserveSeats);
 
 router.route("/user-seats/:seatId").get(controllers.fetchSeatsAssociatedWithUser);
 

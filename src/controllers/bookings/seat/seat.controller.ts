@@ -134,23 +134,10 @@ const reserveSeats = asyncHandler(
   ),
 );
 
-const searchForAvailableSeats = asyncHandler(async (req: Request, res: Response) => {
-  const { seatId } = req.params;
-
+const getAllSeats = asyncHandler(async (req: Request, res: Response) => {
   const availableSeats = await seatModel.aggregate([
     {
-      $match: {
-        _id: {
-          $ne: new mongoose.Types.ObjectId(seatId),
-        },
-        isBooked: false,
-      },
-    },
-    {
-      $project: {
-        seatNumbers: 1,
-        seatNumber: 1,
-      },
+      $match: {},
     },
     {
       $sort: {
@@ -180,4 +167,4 @@ const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res
   return new ApiResponse(StatusCodes.OK, { userSeats: userSeatsAggregate }, "User events fetched");
 });
 
-export { reserveSeats, reserveASeat, searchForAvailableSeats, fetchSeatsAssociatedWithUser };
+export { reserveSeats, reserveASeat, getAllSeats, fetchSeatsAssociatedWithUser };
