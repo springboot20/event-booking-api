@@ -1,9 +1,9 @@
 import { userModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { generateTokens } from "../../../utils/jwt";
-import { ApiError } from "../../../utils/ApiError";
+import { ApiError } from "../../../utils/api.error";
 import { isPasswordCorrect } from "../../../utils/helpers";
-import { ApiResponse } from "../../../utils/ApiResponse";
+import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 

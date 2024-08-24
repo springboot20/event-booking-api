@@ -1,6 +1,6 @@
 import jsonwebtoken from 'jsonwebtoken';
 import { userModel } from '../models/index';
-import { ApiError } from './ApiError';
+import { ApiError } from './api.error';
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../types';
 import { Response } from 'express';

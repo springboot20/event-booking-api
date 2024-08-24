@@ -4,8 +4,8 @@ import { StatusCodes } from "http-status-codes";
 import { eventModel, eventCategory } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { withTransactions } from "../../../middlewares/transaction.middleware";
-import { ApiError } from "../../../utils/ApiError";
-import { ApiResponse } from "../../../utils/ApiResponse";
+import { ApiError } from "../../../utils/api.error";
+import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {

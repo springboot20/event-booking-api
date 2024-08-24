@@ -1,9 +1,9 @@
 import { userModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { withTransactions } from "../../../middlewares/transaction.middleware";
-import { ApiError } from "../../../utils/ApiError";
+import { ApiError } from "../../../utils/api.error";
 import { generateTemporaryToken } from "../../../utils/helpers";
-import { ApiResponse } from "../../../utils/ApiResponse";
+import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { sendMail } from "../../../service/email.service";
 import { Request, Response } from "express";

@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/api.error';
 import { removeUnusedMulterImageFilesOnError } from '../utils/helpers';
 import mongoose from 'mongoose';
 import { NextFunction, Request, Response } from 'express';

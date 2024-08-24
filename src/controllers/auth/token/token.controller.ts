@@ -1,8 +1,8 @@
 import { userModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { generateTokens, validateToken } from "../../../utils/jwt";
-import { ApiError } from "../../../utils/ApiError";
-import { ApiResponse } from "../../../utils/ApiResponse";
+import { ApiError } from "../../../utils/api.error";
+import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { Request, Response } from "express";
 import mongoose from "mongoose";

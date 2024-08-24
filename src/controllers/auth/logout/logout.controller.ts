@@ -1,6 +1,6 @@
 import { userModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { ApiResponse } from "../../../utils/ApiResponse";
+import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { CustomRequest } from "../../../types/index";
 import { Response } from "express";

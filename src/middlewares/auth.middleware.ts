@@ -2,7 +2,7 @@ import { StatusCodes } from 'http-status-codes';
 import { asyncHandler } from '../utils/asyncHandler';
 import { validateToken } from '../utils/jwt';
 import { userModel } from '../models/index';
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/api.error';
 import { NextFunction, Request, Response } from 'express';
 import { JwtPayload } from 'jsonwebtoken';
 import { CustomRequest } from 'src/types';
