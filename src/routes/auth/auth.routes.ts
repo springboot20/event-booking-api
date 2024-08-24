@@ -1,6 +1,12 @@
 import express from "express";
 import * as controllers from "../../controllers/index";
 import { verifyJWT } from "../../middlewares/auth.middleware";
+import { validate } from "../../middlewares/validator.middleware";
+import {
+  userForgotPasswordValidator,
+  userLoginValidator,
+  userRegistrationValidator,
+} from "../../validator/auth/auth.validator";
 // import { upload } from "../../middlewares/multer.middleware";
 
 const router = express.Router();
@@ -9,11 +15,13 @@ const router = express.Router();
  * UNPROTECTED ROUTES
  */
 
-router.route("/register").post(controllers.register);
+router.route("/register").post(validate, userRegistrationValidator(), controllers.register);
 
-router.route("/login").post(controllers.login);
+router.route("/login").post(validate, userLoginValidator(), controllers.login);
 
-router.route("/forgot-password/").post(controllers.forgotPassword);
+router
+  .route("/forgot-password/")
+  .post(validate, userForgotPasswordValidator(), controllers.forgotPassword);
 
 router.route("/send-email/").post(controllers.sendEmail);
 
