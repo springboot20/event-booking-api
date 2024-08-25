@@ -9,6 +9,7 @@ import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
 import { uploadFileToCloudinary } from "src/configs/cloudinary.config";
 import { aggreagetPaginate } from "src/utils/helpers";
+import { title } from "process";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
@@ -96,30 +97,38 @@ const createEvent = asyncHandler(
 const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response) => {
   const { title } = req.body;
 
-  const availableEvents = await eventModel.aggregate([
+  const availableEvent = await eventModel.aggregate([
     {
       $match: {
-        title: {
-          $eq: title,
-        },
-      },
-    },
-    {
-      $sort: {
-        updatedAt: -1,
+        title,
       },
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, { availableEvents }, "Available events fetched");
+  return new ApiResponse(StatusCodes.OK, availableEvent, "available events fetched");
 });
 
 const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { limit = 10, page = 1 } = req.query;
+  const { limit = 10, page = 1, featured } = req.query;
 
   const eventsAggregate = eventModel.aggregate([
     {
-      $match: {},
+      $match:
+        title.length > 0
+          ? {
+              title: {
+                $regex: title.trim(),
+                $options: "i",
+              },
+            }
+          : {},
+    },
+    {
+      $match: featured
+        ? {
+            featured: Boolean(featured),
+          }
+        : {},
     },
   ]);
 
