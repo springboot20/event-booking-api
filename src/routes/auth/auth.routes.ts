@@ -7,7 +7,8 @@ import {
   userLoginValidator,
   userRegistrationValidator,
 } from "../../validator/auth/auth.validator";
-// import { upload } from "../../middlewares/multer.middleware";
+import { mongoParamsPathVariables } from "src/validator/params/parame.validator";
+import { upload } from "../../middlewares/multer.middleware";
 
 const router = express.Router();
 
@@ -15,19 +16,24 @@ const router = express.Router();
  * UNPROTECTED ROUTES
  */
 
-router.route("/register").post(validate, userRegistrationValidator(), controllers.register);
+router.route("/register").post(userRegistrationValidator(), validate, controllers.register);
 
-router.route("/login").post(validate, userLoginValidator(), controllers.login);
+router.route("/login").post(userLoginValidator(), validate, controllers.login);
 
 router
   .route("/forgot-password/")
-  .post(validate, userForgotPasswordValidator(), controllers.forgotPassword);
+  .post(userForgotPasswordValidator(), validate, controllers.forgotPassword);
 
 router.route("/send-email/").post(controllers.sendEmail);
 
-router.route("/verify-email/:id/:token").post(controllers.verifyEmail);
-
-router.route("/reset-password/:resetToken").post(controllers.resetPassword);
+router
+  .route("/verify-email/:id/:token")
+  .post(
+    mongoParamsPathVariables("id"),
+    mongoParamsPathVariables("token"),
+    validate,
+    controllers.verifyEmail,
+  );
 
 /**
  * PROTECTED ROUTES
@@ -39,12 +45,14 @@ router.route("/resend-email-verification").post(verifyJWT, controllers.resendEma
 
 router.route("/change-current-password").post(verifyJWT, controllers.changeCurrentPassword);
 
-router.route("/reset-forgotten-password/:resetToken").post(verifyJWT, controllers.resetPassword);
+router
+  .route("/reset-forgotten-password/:resetToken")
+  .post(mongoParamsPathVariables("resetToken"), validate, verifyJWT, controllers.resetPassword);
 
 router.route("/current-user").get(verifyJWT, controllers.getCurrentUser);
 
-// router
-//   .route("/upload-avatar")
-//   .post(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar);
+router
+  .route("/upload-avatar")
+  .post(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar);
 
 export { router };
