@@ -7,6 +7,7 @@ import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
+import { uploadFileToCloudinary } from "src/configs/cloudinary.config";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
@@ -42,12 +43,27 @@ const createEvent = asyncHandler(
 
       const { title, description, price, location, eventDate, category, from, to, capacity } =
         req.body;
+
+      if (!req.file) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
+      }
+
+      let uploadImage;
+
+      if (req.file) {
+        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
+      }
+
       const event_category = await eventCategory.findById(category);
 
       if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
 
       const createdEvent = await eventModel.create({
         title,
+        image: {
+          url: uploadImage?.secure_url,
+          public_id: uploadImage?.public_id,
+        },
         owner,
         description,
         location,
@@ -132,6 +148,7 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
         category: new mongoose.Types.ObjectId(categoryId),
       },
     },
+    ...pipelineAggregation(),
     {
       $sort: {
         updatedAt: -1,
@@ -145,7 +162,14 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await eventCategory.findById(eventId);
+  const event = await eventCategory.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(eventId),
+      },
+    },
+    ...pipelineAggregation(),
+  ]);
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 

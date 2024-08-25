@@ -11,7 +11,6 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
         url: String,
         public_id: String,
       },
-      required: true,
     },
     title: {
       type: String,
