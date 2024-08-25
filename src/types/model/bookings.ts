@@ -1,6 +1,10 @@
 import { Document, Types } from "mongoose";
 
 export interface EventSchema extends Document {
+  image: {
+    url: string;
+    public_id: string;
+  };
   title: string;
   description: string;
   price: number;

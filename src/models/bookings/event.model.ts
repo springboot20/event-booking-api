@@ -6,6 +6,13 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
   {
+    image: {
+      type: {
+        url: String,
+        public_id: String,
+      },
+      required: true,
+    },
     title: {
       type: String,
       required: true,
