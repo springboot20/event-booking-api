@@ -2,6 +2,7 @@ import { Request } from "express";
 import fs from "fs";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 const getStaticFilePath = (req: Request, filename: string) =>
   `${req.protocol}://${req.get("host")}/images/${filename}`;
@@ -55,4 +56,25 @@ export {
   removeUnusedMulterImageFilesOnError,
   isPasswordCorrect,
   generateTemporaryToken,
+};
+
+interface AggregateInterface {
+  limit: number;
+  page: number;
+  customLabels: mongoose.CustomLabels;
+}
+
+export const aggreagetPaginate = ({
+  limit = 10,
+  page = 1,
+  ...customLabels
+}: AggregateInterface): mongoose.PaginateOptions => {
+  return {
+    page: Math.max(page, 1),
+    limit: Math.max(limit, 1),
+    customLabels: {
+      pagingCounter: "serialNumberStartFrom",
+      ...customLabels,
+    },
+  };
 };

@@ -1,8 +1,8 @@
-import { Schema, model, Model } from "mongoose";
+import mongoose, { Schema, model, Model } from "mongoose";
 import { EventSchema } from "src/types/model/bookings";
 import { bookingModel } from "./booking.model";
 import { seatModel } from "./seat.model";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
+import paginate from "mongoose-paginate-v2";
 
 const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
   {
@@ -56,9 +56,9 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
   { timestamps: true },
 );
 
-const eventModel = model<EventSchema>("Event", eventSchema);
+eventSchema.plugin(paginate);
 
-eventSchema.plugin(mongooseAggregatePaginate);
+const eventModel = model<EventSchema, mongoose.PaginateModel<EventSchema>>("Event", eventSchema);
 
 eventSchema.pre("deleteMany", async function (next) {
   await bookingModel.deleteMany({ event: this });

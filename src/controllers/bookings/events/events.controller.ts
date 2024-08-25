@@ -8,6 +8,7 @@ import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
 import { uploadFileToCloudinary } from "src/configs/cloudinary.config";
+import { aggreagetPaginate } from "src/utils/helpers";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
@@ -114,21 +115,25 @@ const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response
 });
 
 const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { limit = 15 } = req.query;
+  const { limit = 10, page = 1 } = req.query;
 
-  const events = await eventModel.aggregate([
+  const eventsAggregate = eventModel.aggregate([
     {
       $match: {},
     },
-    {
-      $limit: +limit,
-    },
-    {
-      $sort: {
-        updatedAt: -1,
-      },
-    },
   ]);
+
+  const events = await eventModel.paginate(
+    eventsAggregate,
+    aggreagetPaginate({
+      limit: Number(limit),
+      page: Number(page),
+      customLabels: {
+        totalDocs: "totalProducts",
+        docs: "products",
+      },
+    }),
+  );
 
   return new ApiResponse(StatusCodes.OK, { events }, "all events fetched");
 });
