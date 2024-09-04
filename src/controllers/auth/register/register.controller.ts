@@ -26,6 +26,8 @@ export const register = asyncHandler(
       isEmailVerified: false,
     });
 
+    console.log(req.body)
+
     await user.save({ validateBeforeSave: false });
 
     const createdUser = await userModel

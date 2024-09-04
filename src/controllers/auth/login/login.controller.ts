@@ -25,6 +25,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const { accessToken, refreshToken } = await generateTokens(res, user!._id.toString());
 
+  user!.isAuthenticated = true;
+
+  await user!.save({ validateBeforeSave: false });
+
   const loggedInUser = await userModel
     .findById(user!._id)
     .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");

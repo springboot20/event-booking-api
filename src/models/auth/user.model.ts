@@ -34,6 +34,7 @@ const userSchema = new Schema<UserSchema, Model<UserSchema>>({
     type: Boolean,
     default: false,
   },
+  isAuthenticated:{type:Boolean, default:false},
   refreshToken: { type: String },
   emailVerificationToken: { type: String },
   emailVerificationExpiry: { types: Date },

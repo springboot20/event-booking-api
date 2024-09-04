@@ -7,9 +7,8 @@ import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
-import { uploadFileToCloudinary } from "src/configs/cloudinary.config";
-import { aggreagetPaginate } from "src/utils/helpers";
-import { title } from "process";
+import { uploadFileToCloudinary } from "../../../configs/cloudinary.config";
+import { aggreagetPaginate } from "../../../utils/helpers";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
@@ -43,8 +42,19 @@ const createEvent = asyncHandler(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
       const owner = req.user?._id;
 
-      const { title, description, price, location, eventDate, category, from, to, capacity } =
-        req.body;
+      const {
+        title,
+        description,
+        price,
+        location,
+        eventDate,
+        category,
+        from,
+        to,
+        featured,
+        capacity,
+        ticket_type,
+      } = req.body;
 
       if (!req.file) {
         throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
@@ -71,7 +81,9 @@ const createEvent = asyncHandler(
         location,
         category,
         eventDate,
+        ticket_type,
         price,
+        featured,
         time: {
           from,
           to,
@@ -109,37 +121,22 @@ const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response
 });
 
 const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { limit = 10, page = 1, featured } = req.query;
+  const { limit = 10, page = 1, title = "", featured } = req.query;
 
-  const eventsAggregate = eventModel.aggregate([
-    {
-      $match:
-        title.length > 0
-          ? {
-              title: {
-                $regex: title.trim(),
-                $options: "i",
-              },
-            }
-          : {},
-    },
-    {
-      $match: featured
-        ? {
-            featured: Boolean(featured),
-          }
-        : {},
-    },
-  ]);
+  let filter: any = { title: { $regex: title as string, $options: "i" } };
+
+  if (featured !== undefined) {
+    filter.featured = JSON.parse(featured as string);
+  }
 
   const events = await eventModel.paginate(
-    eventsAggregate,
+    filter,
     aggreagetPaginate({
       limit: Number(limit),
       page: Number(page),
       customLabels: {
-        totalDocs: "totalProducts",
-        docs: "products",
+        totalDocs: "totalEvents",
+        docs: "events",
       },
     }),
   );
@@ -176,18 +173,11 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await eventCategory.aggregate([
-    {
-      $match: {
-        _id: new mongoose.Types.ObjectId(eventId),
-      },
-    },
-    ...pipelineAggregation(),
-  ]);
+  const event = await eventModel.findOne({ _id: eventId }).populate("category").exec();
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  return new ApiResponse(StatusCodes.OK, { event }, "Available events fetched");
+  return new ApiResponse(StatusCodes.OK, { event }, "event fetched");
 });
 
 const updateEvent = asyncHandler(

@@ -13,6 +13,8 @@ export interface EventSchema extends Document {
   seatId: Types.ObjectId;
   eventDate: Date;
   capacity: number;
+  featured: boolean;
+  ticket_type: string;
   time: {
     from: Date;
     to: Date;

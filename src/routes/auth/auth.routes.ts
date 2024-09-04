@@ -7,7 +7,7 @@ import {
   userLoginValidator,
   userRegistrationValidator,
 } from "../../validator/auth/auth.validator";
-import { mongoParamsPathVariables } from "src/validator/params/parame.validator";
+import { mongoParamsPathVariables } from "../../validator/params/parame.validator";
 import { upload } from "../../middlewares/multer.middleware";
 
 const router = express.Router();

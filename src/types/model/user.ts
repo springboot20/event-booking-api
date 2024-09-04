@@ -12,6 +12,7 @@ export interface UserSchema extends Document {
   forgotPasswordToken: string | undefined;
   forgotPasswordExpiry: Date | undefined;
   loginType: string;
+  isAuthenticated: boolean;
   avatar: {
     type: {
       url: string;
@@ -21,7 +22,7 @@ export interface UserSchema extends Document {
 }
 
 export enum ROLE {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-  SUB_ADMIN = 'SUB_ADMIN',
+  ADMIN = "ADMIN",
+  USER = "USER",
+  SUB_ADMIN = "SUB_ADMIN",
 }

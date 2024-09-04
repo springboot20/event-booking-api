@@ -32,15 +32,15 @@ export const getCategoryById = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const getAllCategories = asyncHandler(async (req: Request, res: Response) => {
-  const category = await eventCategory.find({});
+  const categories = await eventCategory.find({}).select("name _id");
 
-  if (!category)
+  if (!categories)
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
       "something went wrong while fetching categories",
     );
 
-  return new ApiResponse(StatusCodes.OK, { category }, "category fetched");
+  return new ApiResponse(StatusCodes.OK, { categories }, "category fetched");
 });
 
 export const updateCategory = asyncHandler(async (req: Request, res: Response) => {

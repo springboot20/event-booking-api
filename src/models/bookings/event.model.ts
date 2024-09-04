@@ -12,9 +12,16 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
         public_id: String,
       },
     },
+    ticket_type: {
+      type: String,
+    },
     title: {
       type: String,
       required: true,
+    },
+    featured: {
+      type: Boolean,
+      default: false,
     },
     description: {
       type: String,
