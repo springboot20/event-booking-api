@@ -10,7 +10,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(controllers.getAllEvents)
+  .get(controllers.getAllEvents, checkUserPermissions(ROLE.ADMIN, ROLE.USER, ROLE.SUB_ADMIN))
   .post(
     verifyJWT,
     upload.single("image"),
@@ -24,14 +24,27 @@ router
     mongoParamsPathVariables("categoryId"),
     validate,
     verifyJWT,
+    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
     controllers.getEventsByCategory,
   );
 
 router
   .route("/:eventId")
   .get(mongoParamsPathVariables("eventId"), validate, controllers.getEventById)
-  .patch(mongoParamsPathVariables("eventId"), validate, verifyJWT, controllers.updateEvent)
-  .delete(mongoParamsPathVariables("eventId"), validate, verifyJWT, controllers.deleteEvent);
+  .patch(
+    mongoParamsPathVariables("eventId"),
+    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
+    validate,
+    verifyJWT,
+    controllers.updateEvent,
+  )
+  .delete(
+    mongoParamsPathVariables("eventId"),
+    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
+    validate,
+    verifyJWT,
+    controllers.deleteEvent,
+  );
 
 router.route("/available-events/").post(controllers.searchForAvailableEvents);
 

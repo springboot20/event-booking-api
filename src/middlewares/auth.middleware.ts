@@ -35,6 +35,7 @@ const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFun
 
 const checkUserPermissions = (...roles: string[]) => {
   return asyncHandler(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    console.log(req)
     if (!req['user']!._id) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Unauthorized request');
     }
