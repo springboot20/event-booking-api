@@ -35,6 +35,8 @@ const deleteFileFromCloudinary = async (
 ) => {
   const paths = publicId.split("/");
 
+  console.log("paths:", paths);
+
   const folderName = paths[0];
   const public_id = paths[1];
 

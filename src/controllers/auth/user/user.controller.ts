@@ -9,7 +9,10 @@ import { CustomRequest } from "../../../types/index";
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { uploadFileToCloudinary } from "../../../configs/cloudinary.config";
+import {
+  deleteFileFromCloudinary,
+  uploadFileToCloudinary,
+} from "../../../configs/cloudinary.config";
 
 export const resetPassword = asyncHandler(
   withTransactions(
@@ -66,7 +69,7 @@ export const updateUserAvatar = asyncHandler(
             $set: {
               avatar: {
                 url: uploadImage?.secure_url,
-                localPath: uploadImage?.public_id,
+                public_id: uploadImage?.public_id,
               },
             },
           },
@@ -77,6 +80,41 @@ export const updateUserAvatar = asyncHandler(
       await user!.save({ session });
 
       return res.status(200).json(new ApiResponse(StatusCodes.OK, { user }, "User avatar updated"));
+    },
+  ),
+);
+
+export const deleteUserAvatar = asyncHandler(
+  withTransactions(
+    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
+      const { public_id } = req.body;
+
+      if (!public_id) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "public_id is required");
+      }
+
+      await deleteFileFromCloudinary(public_id, "image");
+
+      const user = await userModel
+        .findByIdAndUpdate(
+          req?.user?._id,
+          {
+            $set: {
+              avatar: {
+                url: null,
+                public_id: null,
+              },
+            },
+          },
+          { new: true },
+        )
+        .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
+
+      await user!.save({ session });
+
+      return res
+        .status(200)
+        .json(new ApiResponse(StatusCodes.OK, { user }, "User avatar deleted successfully"));
     },
   ),
 );

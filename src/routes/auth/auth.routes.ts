@@ -53,6 +53,7 @@ router.route("/current-user").get(verifyJWT, controllers.getCurrentUser);
 
 router
   .route("/upload-avatar")
-  .patch(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar);
+  .patch(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar)
+  .delete(verifyJWT, controllers.deleteUserAvatar);
 
 export { router };
