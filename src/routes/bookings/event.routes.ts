@@ -33,10 +33,10 @@ router
   .get(mongoParamsPathVariables("eventId"), validate, controllers.getEventById)
   .patch(
     mongoParamsPathVariables("eventId"),
-    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
-    upload.single("image"),
     validate,
     verifyJWT,
+    upload.single("image"),
+    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
     controllers.updateEvent,
   )
   .delete(
