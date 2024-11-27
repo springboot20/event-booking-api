@@ -34,6 +34,7 @@ router
   .patch(
     mongoParamsPathVariables("eventId"),
     checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
+    upload.single("image"),
     validate,
     verifyJWT,
     controllers.updateEvent,

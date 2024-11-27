@@ -41,12 +41,12 @@ const checkUserPermissions = (...roles: string[]) => {
     console.log(req.user);
 
     // Ensure req.user exists and _id is present
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user?._id) {
       throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request");
     }
 
     // Check if the user's role is included in the allowed roles
-    if (roles.includes(req.user.role)) {
+    if (roles.includes(req.user?.role)) {
       return next();
     } else {
       throw new ApiError(

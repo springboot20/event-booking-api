@@ -14,18 +14,51 @@ v2.config({
 const uploadFileToCloudinary = async (
   buffer: Buffer,
   folder: string,
+  publicId?: string,
 ): Promise<UploadApiResponse> => {
-  return new Promise((resolve, reject) => {
-    v2.uploader
-      .upload_stream({ resource_type: "auto", folder }, (error, result) => {
-        if (error) {
-          reject(new ApiError(StatusCodes.BAD_REQUEST, error.message));
-        } else {
-          resolve(result!);
-        }
-      })
-      .end(buffer);
-  });
+  try {
+    if (publicId) {
+      const paths = publicId?.split("/");
+
+      console.log("paths:", paths);
+
+      const [folderName, filePublicId] = paths;
+
+      // Destroy existing image
+      const destroyResponse = await v2.uploader.destroy(`${folderName}/${filePublicId}`);
+
+      if (destroyResponse.result === "not found") {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Public ID not found. Provide a valid publicId.",
+        );
+      }
+
+      if (destroyResponse.result !== "ok") {
+        throw new ApiError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          "Error while deleting existing file. Try again.",
+        );
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      v2.uploader
+        .upload_stream({ resource_type: "auto", folder, public_id: publicId }, (error, result) => {
+          if (error) {
+            reject(new ApiError(StatusCodes.BAD_REQUEST, error.message));
+          } else {
+            resolve(result!);
+          }
+        })
+        .end(buffer);
+    });
+  } catch (error: any) {
+    // Wrap errors with ApiError for consistent error handling
+    throw error instanceof ApiError
+      ? error
+      : new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message);
+  }
 };
 
 const deleteFileFromCloudinary = async (

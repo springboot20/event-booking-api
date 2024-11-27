@@ -184,11 +184,31 @@ const updateEvent = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
       const { eventId } = req.params;
+      const event = await eventModel.findById(eventId).session(session);
+
+      if (!event) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "event not found");
+      }
+
+      let uploadImage;
+      if (req.file) {
+        uploadImage = await uploadFileToCloudinary(
+          req.file.buffer,
+          "event-bookings",
+          event?.image?.public_id as string,
+        );
+      }
 
       const updatedEvent = await eventModel.findByIdAndUpdate(
         eventId,
         {
-          $set: { owner: req.user!._id, ...req.body },
+          $set: {
+            image: {
+              url: uploadImage?.secure_url,
+              public_id: uploadImage?.public_id,
+            },
+            ...req.body,
+          },
         },
         { new: true },
       );
