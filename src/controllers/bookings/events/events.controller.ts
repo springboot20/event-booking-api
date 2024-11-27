@@ -7,7 +7,10 @@ import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
-import { uploadFileToCloudinary } from "../../../configs/cloudinary.config";
+import {
+  deleteFileFromCloudinary,
+  uploadFileToCloudinary,
+} from "../../../configs/cloudinary.config";
 import { aggreagetPaginate } from "../../../utils/helpers";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
@@ -191,11 +194,13 @@ const updateEvent = asyncHandler(
       }
 
       let uploadImage;
+
       if (req.file) {
-        uploadImage = await uploadFileToCloudinary(
-          req.file.buffer,
-          event?.image?.public_id as string,
-        );
+        if (event?.image?.public_id) {
+          await deleteFileFromCloudinary(event.image.public_id, "image");
+        }
+
+        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
       }
 
       const updatedEvent = await eventModel.findByIdAndUpdate(
@@ -226,6 +231,11 @@ const updateEvent = asyncHandler(
 const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
 
+  const event = await eventModel.findById(eventId);
+
+  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
+
+  await deleteFileFromCloudinary(event.image.public_id, "image");
   const deletedEvent = await eventModel.findByIdAndDelete(eventId);
 
   if (!deletedEvent) {
