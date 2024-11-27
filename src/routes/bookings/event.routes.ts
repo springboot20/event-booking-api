@@ -41,9 +41,9 @@ router
   )
   .delete(
     mongoParamsPathVariables("eventId"),
-    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
     validate,
     verifyJWT,
+    checkUserPermissions(ROLE.ADMIN, ROLE.SUB_ADMIN),
     controllers.deleteEvent,
   );
 
