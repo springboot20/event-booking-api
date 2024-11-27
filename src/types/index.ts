@@ -7,6 +7,6 @@ export interface User {
   role: string;
 }
 
-export interface CustomRequest extends Express.User, Request {
-  user?: { _id?: string; role: string };
+export interface CustomRequest extends Request {
+  user?: User;
 }

@@ -1,23 +1,23 @@
-import mongoose from 'mongoose';
-import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
-import { eventModel, eventCategory } from '../../../models/index';
-import { asyncHandler } from '../../../utils/asyncHandler';
-import { withTransactions } from '../../../middlewares/transaction.middleware';
-import { ApiError } from '../../../utils/api.error';
-import { ApiResponse } from '../../../utils/api.response';
-import { CustomRequest } from '../../../types/index';
-import { uploadFileToCloudinary } from '../../../configs/cloudinary.config';
-import { aggreagetPaginate } from '../../../utils/helpers';
+import mongoose from "mongoose";
+import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+import { eventModel, eventCategory } from "../../../models/index";
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { withTransactions } from "../../../middlewares/transaction.middleware";
+import { ApiError } from "../../../utils/api.error";
+import { ApiResponse } from "../../../utils/api.response";
+import { CustomRequest } from "../../../types/index";
+import { uploadFileToCloudinary } from "../../../configs/cloudinary.config";
+import { aggreagetPaginate } from "../../../utils/helpers";
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
     {
       $lookup: {
-        from: 'categories',
-        foreignField: '_id',
-        localField: 'category',
-        as: 'event_category',
+        from: "categories",
+        foreignField: "_id",
+        localField: "category",
+        as: "event_category",
         pipeline: [
           {
             $project: {
@@ -30,7 +30,7 @@ const pipelineAggregation = (): mongoose.PipelineStage[] => {
     {
       $addFields: {
         event_category: {
-          $first: '$event_category',
+          $first: "$event_category",
         },
       },
     },
@@ -57,18 +57,18 @@ const createEvent = asyncHandler(
       } = req.body;
 
       if (!req.file) {
-        throw new ApiError(StatusCodes.NOT_FOUND, 'no image uploaded');
+        throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
       }
 
       let uploadImage;
 
       if (req.file) {
-        uploadImage = await uploadFileToCloudinary(req.file.buffer, 'event-bookings');
+        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
       }
 
       const event_category = await eventCategory.findById(category);
 
-      if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, 'category does not exist');
+      if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
 
       const createdEvent = await eventModel.create({
         title,
@@ -94,16 +94,16 @@ const createEvent = asyncHandler(
       await createdEvent.save({ session });
 
       if (!createdEvent) {
-        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Internal server error');
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
       }
 
       return res
         .status(StatusCodes.OK)
         .json(
-          new ApiResponse(StatusCodes.OK, { event: createdEvent }, 'Event created successfully')
+          new ApiResponse(StatusCodes.OK, { event: createdEvent }, "Event created successfully"),
         );
-    }
-  )
+    },
+  ),
 );
 
 const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response) => {
@@ -117,13 +117,13 @@ const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, availableEvent, 'available events fetched');
+  return new ApiResponse(StatusCodes.OK, availableEvent, "available events fetched");
 });
 
 const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
-  const { limit = 10, page = 1, title = '', featured } = req.query;
+  const { limit = 10, page = 1, title = "", featured } = req.query;
 
-  let filter: any = { title: { $regex: title as string, $options: 'i' } };
+  let filter: any = { title: { $regex: title as string, $options: "i" } };
 
   if (featured !== undefined) {
     filter.featured = JSON.parse(featured as string);
@@ -135,22 +135,22 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
       limit: Number(limit),
       page: Number(page),
       customLabels: {
-        totalDocs: 'totalEvents',
-        docs: 'events',
+        totalDocs: "totalEvents",
+        docs: "events",
       },
-    })
+    }),
   );
 
-  return new ApiResponse(StatusCodes.OK, { events }, 'all events fetched');
+  return new ApiResponse(StatusCodes.OK, { events }, "all events fetched");
 });
 
 const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => {
   const { categoryId } = req.params;
 
-  const category = await eventCategory.findById(categoryId).select('name _id');
+  const category = await eventCategory.findById(categoryId).select("name _id");
 
   if (!category) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'category does not exists');
+    throw new ApiError(StatusCodes.NOT_FOUND, "category does not exists");
   }
 
   const event_category = await eventModel.aggregate([
@@ -167,17 +167,17 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, { category: event_category }, 'Available events fetched');
+  return new ApiResponse(StatusCodes.OK, { category: event_category }, "Available events fetched");
 });
 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await eventModel.findOne({ _id: eventId }).populate('category').exec();
+  const event = await eventModel.findOne({ _id: eventId }).populate("category owner").exec();
 
-  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, 'event does not exist');
+  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  return new ApiResponse(StatusCodes.OK, { event }, 'event fetched');
+  return new ApiResponse(StatusCodes.OK, { event }, "event fetched");
 });
 
 const updateEvent = asyncHandler(
@@ -190,18 +190,18 @@ const updateEvent = asyncHandler(
         {
           $set: { owner: req.user!._id, ...req.body },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updatedEvent) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, 'Error occur while updating event document');
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Error occur while updating event document");
       }
 
       await updatedEvent.save({ session });
 
-      return new ApiResponse(StatusCodes.OK, { updatedEvent }, 'Event updated');
-    }
-  )
+      return new ApiResponse(StatusCodes.OK, { updatedEvent }, "Event updated");
+    },
+  ),
 );
 
 const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
@@ -210,10 +210,10 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   const deletedEvent = await eventModel.findByIdAndDelete(eventId);
 
   if (!deletedEvent) {
-    throw new ApiError(StatusCodes.NOT_FOUND, 'event does not exists');
+    throw new ApiError(StatusCodes.NOT_FOUND, "event does not exists");
   }
 
-  return new ApiResponse(StatusCodes.OK, {}, 'event deledted successfully');
+  return new ApiResponse(StatusCodes.OK, {}, "event deledted successfully");
 });
 
 export {

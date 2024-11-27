@@ -9,9 +9,9 @@ const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   avatar: {
     type: {
       url: String,
-      localPath: String,
+      public_id: String,
     },
-    default: "",
+    default: { url: null, public_id: null }, // Ensure the default is an object
   },
   username: {
     type: String,

@@ -1,17 +1,17 @@
-import { StatusCodes } from 'http-status-codes';
-import { asyncHandler } from '../utils/asyncHandler';
-import { validateToken } from '../utils/jwt';
-import { userModel } from '../models/index';
-import { ApiError } from '../utils/api.error';
-import { NextFunction, Request, Response } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
-import { CustomRequest } from 'src/types';
+import { StatusCodes } from "http-status-codes";
+import { asyncHandler } from "../utils/asyncHandler";
+import { validateToken } from "../utils/jwt";
+import { userModel } from "../models/index";
+import { ApiError } from "../utils/api.error";
+import { NextFunction, Request, Response } from "express";
+import { JwtPayload } from "jsonwebtoken";
+import { CustomRequest } from "../types";
 
 const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies?.accessToken || req.headers?.authorization?.replace('Bearer ', '');
+  const token = req.cookies?.accessToken || req.headers?.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'verifyJWT Invalid');
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "verifyJWT Invalid");
   }
 
   try {
@@ -19,33 +19,43 @@ const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFun
 
     const user = await userModel
       .findById(decodedToken?._id)
-      .select('-password -refreshToken -emailVerificationToken -emailVerificationExpiry');
+      .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
 
     if (!user) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid Token provided');
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid Token provided");
     }
+
+    console.log(user)
 
     req.user = user;
     next();
   } catch (error) {
     next(error);
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'verifyJWT Invalid');
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "verifyJWT Invalid");
   }
 });
 
 const checkUserPermissions = (...roles: string[]) => {
   return asyncHandler(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    console.log(req)
-    if (!req['user']!._id) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'Unauthorized request');
+    // Log req.user for debugging
+    console.log(req.user);
+
+    // Ensure req.user exists and _id is present
+    if (!req.user || !req.user._id) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request");
     }
 
-    if (roles.includes(req['user']!.role)) {
-      next();
+    // Check if the user's role is included in the allowed roles
+    if (roles.includes(req.user.role)) {
+      return next();
     } else {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, 'you are not allow to perform such action');
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        "You are not allowed to perform this action"
+      );
     }
   });
 };
+
 
 export { verifyJWT, checkUserPermissions };

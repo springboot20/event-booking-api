@@ -2,18 +2,14 @@ import { userModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
-import {
-  removeLocalFilepath,
-  getLocalFilePath,
-  getStaticFilePath,
-  isPasswordCorrect,
-} from "../../../utils/helpers";
+import { isPasswordCorrect } from "../../../utils/helpers";
 import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { CustomRequest } from "../../../types/index";
 import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import mongoose from "mongoose";
+import { uploadFileToCloudinary } from "../../../configs/cloudinary.config";
 
 export const resetPassword = asyncHandler(
   withTransactions(
@@ -22,7 +18,7 @@ export const resetPassword = asyncHandler(
       const { newPassword } = req.body;
 
       const user = await userModel.findOne({
-        _id: req["user"]!._id,
+        _id: req?.user?._id,
         forgotPasswordExpiry: {
           $gte: Date.now(),
         },
@@ -54,22 +50,23 @@ export const resetPassword = asyncHandler(
 export const updateUserAvatar = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-    
       if (!req.file) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "user avatar image is required");
       }
+      let uploadImage;
 
-      const avatarLocalFilePath = getLocalFilePath(req.file?.filename);
-      const avatarStaticFilePath = getStaticFilePath(req, req.file?.filename);
+      if (req.file) {
+        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
+      }
 
       const user = await userModel
         .findByIdAndUpdate(
-          req["user"]!._id,
+          req?.user?._id,
           {
             $set: {
               avatar: {
-                url: avatarStaticFilePath,
-                localPath: avatarLocalFilePath,
+                url: uploadImage?.secure_url,
+                localPath: uploadImage?.public_id,
               },
             },
           },
@@ -78,8 +75,6 @@ export const updateUserAvatar = asyncHandler(
         .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
 
       await user!.save({ session });
-
-      removeLocalFilepath(user!.avatar?.type.localPath as string);
 
       return res.status(200).json(new ApiResponse(StatusCodes.OK, { user }, "User avatar updated"));
     },

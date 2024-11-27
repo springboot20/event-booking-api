@@ -28,4 +28,32 @@ const uploadFileToCloudinary = async (
   });
 };
 
-export { uploadFileToCloudinary };
+const deleteFileFromCloudinary = async (
+  publicId: string,
+  resource_type?: string,
+  type?: string,
+) => {
+  const paths = publicId.split("/");
+
+  const folderName = paths[0];
+  const public_id = paths[1];
+
+  return new Promise((resolve, reject) => {
+    v2.uploader.destroy(
+      `${folderName}/${public_id}`,
+      {
+        resource_type,
+        type,
+      },
+      (error, result) => {
+        if (error) {
+          reject(new ApiError(StatusCodes.BAD_REQUEST, error.message));
+        } else {
+          resolve(result);
+        }
+      },
+    );
+  });
+};
+
+export { uploadFileToCloudinary, deleteFileFromCloudinary };
