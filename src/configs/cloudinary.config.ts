@@ -13,19 +13,12 @@ v2.config({
 
 const uploadFileToCloudinary = async (
   buffer: Buffer,
-  folder: string,
+  folder?: string,
   publicId?: string,
 ): Promise<UploadApiResponse> => {
   try {
     if (publicId) {
-      const paths = publicId?.split("/");
-
-      console.log("paths:", paths);
-
-      const [folderName, filePublicId] = paths;
-
-      // Destroy existing image
-      const destroyResponse = await v2.uploader.destroy(`${folderName}/${filePublicId}`);
+      const destroyResponse = await v2.uploader.destroy(publicId);
 
       if (destroyResponse.result === "not found") {
         throw new ApiError(

@@ -194,7 +194,6 @@ const updateEvent = asyncHandler(
       if (req.file) {
         uploadImage = await uploadFileToCloudinary(
           req.file.buffer,
-          "event-bookings",
           event?.image?.public_id as string,
         );
       }
