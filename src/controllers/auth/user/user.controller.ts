@@ -53,13 +53,23 @@ export const resetPassword = asyncHandler(
 export const updateUserAvatar = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
+      const db_user = await userModel.findById(req?.user?._id);
+
       if (!req.file) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "user avatar image is required");
       }
+
       let uploadImage;
 
       if (req.file) {
-        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
+        if (db_user?.avatar?.public_id && db_user?.avatar?.public_id !== null) {
+          await deleteFileFromCloudinary(db_user?.avatar?.public_id, "image");
+        }
+
+        uploadImage = await uploadFileToCloudinary(
+          req.file.buffer,
+          `${process.env.CLOUDINARY_BASE_FOLDER}/users-image`,
+        );
       }
 
       const user = await userModel
@@ -80,41 +90,6 @@ export const updateUserAvatar = asyncHandler(
       await user!.save({ session });
 
       return res.status(200).json(new ApiResponse(StatusCodes.OK, { user }, "User avatar updated"));
-    },
-  ),
-);
-
-export const deleteUserAvatar = asyncHandler(
-  withTransactions(
-    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-      const { public_id } = req.body;
-
-      if (!public_id) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "public_id is required");
-      }
-
-      await deleteFileFromCloudinary(public_id, "image");
-
-      const user = await userModel
-        .findByIdAndUpdate(
-          req?.user?._id,
-          {
-            $set: {
-              avatar: {
-                url: null,
-                public_id: null,
-              },
-            },
-          },
-          { new: true },
-        )
-        .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
-
-      await user!.save({ session });
-
-      return res
-        .status(200)
-        .json(new ApiResponse(StatusCodes.OK, { user }, "User avatar deleted successfully"));
     },
   ),
 );

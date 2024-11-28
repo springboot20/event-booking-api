@@ -14,10 +14,8 @@ export interface UserSchema extends Document {
   loginType: string;
   isAuthenticated: boolean;
   avatar: {
-    type: {
-      url: string;
-      localPath: string;
-    };
+    url: string | null;
+    public_id: string | null;
   };
 }
 

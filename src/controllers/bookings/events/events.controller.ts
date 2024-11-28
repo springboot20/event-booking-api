@@ -66,7 +66,10 @@ const createEvent = asyncHandler(
       let uploadImage;
 
       if (req.file) {
-        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
+        uploadImage = await uploadFileToCloudinary(
+          req.file.buffer,
+          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`,
+        );
       }
 
       const event_category = await eventCategory.findById(category);
