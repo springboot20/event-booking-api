@@ -203,7 +203,7 @@ const updateEvent = asyncHandler(
           await deleteFileFromCloudinary(event.image.public_id, "image");
         }
 
-        uploadImage = await uploadFileToCloudinary(req.file.buffer, "event-bookings");
+        uploadImage = await uploadFileToCloudinary(req.file.buffer, `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`);
       }
 
       const updatedEvent = await eventModel.findByIdAndUpdate(
