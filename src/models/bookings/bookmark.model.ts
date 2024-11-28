@@ -1,5 +1,26 @@
-import mongoose, { Schema, model, Model } from "mongoose";
-import { EventSchema } from "src/types/model/bookings";
-import { bookingModel } from "./booking.model";
-import { seatModel } from "./seat.model";
+import  { Schema, model } from "mongoose";
 import paginate from "mongoose-paginate-v2";
+
+const bookmarkSchema = new Schema(
+  {
+    markBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    events: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Event",
+        },
+      ],
+    },
+  },
+  { timestamps: true },
+);
+
+bookmarkSchema.plugin(paginate);
+
+const bookmarkModel = model("Bookmark", bookmarkSchema);
+
+export { bookmarkModel };
