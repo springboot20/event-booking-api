@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { AvailableSocialLogin, UserLoginType } from "../../constants/constants";
 import { ROLE, UserSchema } from "../../types/model/user";
 import { seatModel } from "../bookings/seat.model";
+import { bookmarkModel } from "../bookings/bookmark.model";
 
 const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   avatar: {
@@ -34,7 +35,7 @@ const userSchema = new Schema<UserSchema, Model<UserSchema>>({
     type: Boolean,
     default: false,
   },
-  isAuthenticated:{type:Boolean, default:false},
+  isAuthenticated: { type: Boolean, default: false },
   refreshToken: { type: String },
   emailVerificationToken: { type: String },
   emailVerificationExpiry: { types: Date },
@@ -62,12 +63,13 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.pre("save", async function (next) {
-  const userBooking = await bookingModel.findOne({ bookedBy: this._id });
+  const userBookmark = await bookmarkModel.findOne({ markBy: this._id });
   const userSeat = await seatModel.findOne({ reservedBy: this._id });
 
-  if (!userBooking) {
-    await bookingModel.create({
-      bookedBy: this._id,
+  if (!userBookmark) {
+    await bookmarkModel.create({
+      markBy: this._id,
+      bookmarkItems: [],
     });
   }
 
@@ -77,7 +79,7 @@ userSchema.pre("save", async function (next) {
     });
   }
 
-  next()
+  next();
 });
 
 userSchema.methods.comparePasswords = function (enteredPassword: string) {
