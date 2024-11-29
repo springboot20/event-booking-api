@@ -9,10 +9,10 @@ const router = express.Router();
 router.use(verifyJWT);
 
 router
-  .route("/item/:eventId")
-  .post(mongoBodyPathVariables("eventId"), validate, controllers.bookEvent)
-  .delete(controllers.removeEventItemFromBooking);
+  .route("/:eventId")
+  .post(mongoBodyPathVariables("eventId"), validate, controllers.addEventToBookmark)
+  .delete(mongoBodyPathVariables("eventId"), validate, controllers.removeEventFromBookmark);
 
-router.route("/").get(mongoBodyPathVariables("eventId"), validate, controllers.getUserBooking);
+router.route("/").get(controllers.getUserBookmark).patch(controllers.clearBookmark);
 
 export { router };

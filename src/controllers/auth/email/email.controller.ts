@@ -41,38 +41,8 @@ export const forgotPassword = asyncHandler(
     return new ApiResponse(
       StatusCodes.OK,
       {},
-      "passwor reset link successfully sent to your email",
+      "password reset link successfully sent to your email",
     );
-  }),
-);
-
-export const sendEmail = asyncHandler(
-  withTransactions(async (req: Request, res: Response, session: mongoose.mongo.ClientSession) => {
-    const { email } = req.body;
-
-    let user = await userModel.findOne({ email });
-
-    if (!user) {
-      throw new ApiError(StatusCodes.CONFLICT, "User already exists in the database collection");
-    }
-
-    const { unHashedToken, hashedToken, tokenExpiry } = await generateTemporaryToken();
-
-    user.emailVerificationToken = hashedToken;
-    user.emailVerificationExpiry = tokenExpiry as unknown as Date;
-
-    await user.save({ validateBeforeSave: false, session });
-
-    const verifyLink = `${req.protocol}://${req.get("host")}/api/v1/verify-email/${unHashedToken}`;
-
-    await sendMail(
-      user?.email,
-      "Email verification",
-      { username: user?.username, verificationLink: verifyLink },
-      "emailVerificationTemplate",
-    );
-
-    return new ApiResponse(StatusCodes.OK, {}, "email verification link sent successful");
   }),
 );
 

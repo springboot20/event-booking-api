@@ -50,7 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/auth", routes.authRoutes.router);
 app.use("/api/v1/events", routes.eventRoutes.router);
 app.use("/api/v1/seats", routes.seatRoutes.router);
-app.use("/api/v1/bookings", routes.bookingsRoutes.router);
+app.use("/api/v1/bookmarks", routes.bookmarkRoutes.router);
 app.use("/api/v1/categories", routes.categoryRoutes.router);
 
 app.use((req, res, next) => {

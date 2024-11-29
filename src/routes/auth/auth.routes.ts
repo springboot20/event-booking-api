@@ -24,8 +24,6 @@ router
   .route("/forgot-password/")
   .post(userForgotPasswordValidator(), validate, controllers.forgotPassword);
 
-router.route("/send-email/").post(controllers.sendEmail);
-
 router
   .route("/verify-email/:id/:token")
   .post(

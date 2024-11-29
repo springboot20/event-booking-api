@@ -13,19 +13,9 @@ const bookingSchema = new Schema(
       ref: "User",
       required: true,
     },
-
     bookingItems: {
       type: [
         {
-          // seats: {
-          //   type: [
-          //     {
-          //       type: Types.ObjectId,
-          //       ref: "Seat",
-          //     },
-          //   ],
-          //   default: [],
-          // },
           ticket: {
             type: Number,
             required: true,

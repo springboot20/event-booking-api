@@ -21,3 +21,13 @@ export interface EventSchema extends Document {
   };
   category: Types.ObjectId;
 }
+
+export interface BookmarkSchema extends Document {
+  markBy: Types.ObjectId;
+  bookmarkItems: [
+    {
+      event: Types.ObjectId;
+      ticket: number;
+    },
+  ];
+}
