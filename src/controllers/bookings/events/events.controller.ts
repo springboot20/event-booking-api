@@ -203,7 +203,10 @@ const updateEvent = asyncHandler(
           await deleteFileFromCloudinary(event.image.public_id, "image");
         }
 
-        uploadImage = await uploadFileToCloudinary(req.file.buffer, `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`);
+        uploadImage = await uploadFileToCloudinary(
+          req.file.buffer,
+          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`,
+        );
       }
 
       const updatedEvent = await eventModel.findByIdAndUpdate(
@@ -238,7 +241,7 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  await deleteFileFromCloudinary(event.image.public_id, "image");
+  if (event.image.public_id) await deleteFileFromCloudinary(event.image.public_id, "image");
   const deletedEvent = await eventModel.findByIdAndDelete(eventId);
 
   if (!deletedEvent) {
