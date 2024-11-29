@@ -62,20 +62,20 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-userSchema.pre("save", async function (next) {
-  const userBookmark = await bookmarkModel.findOne({ markBy: this._id });
-  const userSeat = await seatModel.findOne({ reservedBy: this._id });
+userSchema.post("save", async function (user, next) {
+  const userBookmark = await bookmarkModel.findOne({ markBy: user._id });
+  const userSeat = await seatModel.findOne({ reservedBy: user._id });
 
   if (!userBookmark) {
     await bookmarkModel.create({
-      markBy: this._id,
+      markBy: user._id,
       bookmarkItems: [],
     });
   }
 
   if (!userSeat) {
     await seatModel.create({
-      reservedBy: this._id,
+      reservedBy: user._id,
     });
   }
 
