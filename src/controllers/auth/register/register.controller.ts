@@ -59,7 +59,7 @@ export const register = asyncHandler(
     return new ApiResponse(
       StatusCodes.OK,
       { user: createdUser },
-      "User registration successfull and verification email ahs been sent to you email",
+      "User registration successfull and verification email has been sent to you email",
     );
   }),
 );

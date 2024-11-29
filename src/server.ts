@@ -39,7 +39,12 @@ app.use(
 
 app.use(cookieParser(process.env.EXPRESS_SESSION_SECRET));
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+  }),
+);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(bodyParser.json());
