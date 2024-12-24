@@ -1,10 +1,8 @@
-import { bookingModel } from "./../bookings/booking.model";
-import { Schema, model, Error, Model } from "mongoose";
-import bcrypt from "bcrypt";
-import { AvailableSocialLogin, UserLoginType } from "../../constants/constants";
-import { ROLE, UserSchema } from "../../types/model/user";
-import { seatModel } from "../bookings/seat.model";
-import { bookmarkModel } from "../bookings/bookmark.model";
+import { Schema, model, Error, Model } from 'mongoose';
+import bcrypt from 'bcrypt';
+import { AvailableSocialLogin, UserLoginType } from '../../constants/constants';
+import { ROLE, UserSchema } from '../../types/model/user';
+import { BookmarkModel } from '../bookings/bookmark.model';
 
 const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   avatar: {
@@ -48,8 +46,8 @@ const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   },
 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -62,29 +60,27 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-userSchema.post("save", async function (user, next) {
-  const userBookmark = await bookmarkModel.findOne({ markBy: user._id });
-  const userSeat = await seatModel.findOne({ reservedBy: user._id });
+userSchema.post('save', async function (user, next) {
+  try {
+    await BookmarkModel.findOneAndUpdate(
+      { markedBy: user._id },
+      {
+        $setOnInsert: {
+          bookmarkItems: [],
+        },
+      },
+      { upsert: true, new: true }
+    );
 
-  if (!userBookmark) {
-    await bookmarkModel.create({
-      markBy: user._id,
-      bookmarkItems: [],
-    });
+    next();
+  } catch (error: any) {
+    next(error);
   }
-
-  if (!userSeat) {
-    await seatModel.create({
-      reservedBy: user._id,
-    });
-  }
-
-  next();
 });
 
 userSchema.methods.comparePasswords = function (enteredPassword: string) {
   return bcrypt.compareSync(enteredPassword, this.password);
 };
 
-const userModel = model<UserSchema>("User", userSchema);
-export { userModel };
+const UserModel = model<UserSchema>('User', userSchema);
+export { UserModel };

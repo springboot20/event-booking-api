@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { eventModel, eventCategory } from "../../../models/index";
+import { EventModel, EventCategoryModel, SeatModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
@@ -12,6 +12,11 @@ import {
   uploadFileToCloudinary,
 } from "../../../configs/cloudinary.config";
 import { aggreagetPaginate } from "../../../utils/helpers";
+
+type Seat = mongoose.Types.DocumentArray<{
+  number: number;
+  isReserved: boolean;
+}>;
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
   return [
@@ -68,15 +73,15 @@ const createEvent = asyncHandler(
       if (req.file) {
         uploadImage = await uploadFileToCloudinary(
           req.file.buffer,
-          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`,
+          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
         );
       }
 
-      const event_category = await eventCategory.findById(category);
+      const event_category = await EventCategoryModel.findById(category);
 
       if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
 
-      const createdEvent = await eventModel.create({
+      const createdEvent = await EventModel.create({
         title,
         image: {
           url: uploadImage?.secure_url,
@@ -97,6 +102,23 @@ const createEvent = asyncHandler(
         capacity,
       });
 
+      let seats = [];
+
+      for (let index = 1; index <= Number(capacity); index++) {
+        seats.push({
+          number: index,
+          isReserved: false,
+        });
+      }
+
+      await SeatModel.create(
+        {
+          seats: seats as Seat,
+          eventId: createdEvent._id,
+        },
+        { session }
+      );
+
       await createdEvent.save({ session });
 
       if (!createdEvent) {
@@ -106,16 +128,16 @@ const createEvent = asyncHandler(
       return res
         .status(StatusCodes.OK)
         .json(
-          new ApiResponse(StatusCodes.OK, { event: createdEvent }, "Event created successfully"),
+          new ApiResponse(StatusCodes.OK, { event: createdEvent }, "Event created successfully")
         );
-    },
-  ),
+    }
+  )
 );
 
 const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response) => {
   const { title } = req.body;
 
-  const availableEvent = await eventModel.aggregate([
+  const availableEvent = await EventModel.aggregate([
     {
       $match: {
         title,
@@ -135,7 +157,7 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
     filter.featured = JSON.parse(featured as string);
   }
 
-  const events = await eventModel.paginate(
+  const events = await EventModel.paginate(
     filter,
     aggreagetPaginate({
       limit: Number(limit),
@@ -144,7 +166,7 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
         totalDocs: "totalEvents",
         docs: "events",
       },
-    }),
+    })
   );
 
   return new ApiResponse(StatusCodes.OK, { events }, "all events fetched");
@@ -153,13 +175,13 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
 const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => {
   const { categoryId } = req.params;
 
-  const category = await eventCategory.findById(categoryId).select("name _id");
+  const category = await EventCategoryModel.findById(categoryId).select("name _id");
 
   if (!category) {
     throw new ApiError(StatusCodes.NOT_FOUND, "category does not exists");
   }
 
-  const event_category = await eventModel.aggregate([
+  const event_category = await EventModel.aggregate([
     {
       $match: {
         category: new mongoose.Types.ObjectId(categoryId),
@@ -179,7 +201,7 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await eventModel.findOne({ _id: eventId }).populate("category owner").exec();
+  const event = await EventModel.findOne({ _id: eventId }).populate("category owner").exec();
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
@@ -190,26 +212,35 @@ const updateEvent = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
       const { eventId } = req.params;
-      const event = await eventModel.findById(eventId).session(session);
+      const { capacity, ...rest } = req.body;
+
+      const event = await EventModel.findById(eventId).session(session);
+      const seat = await SeatModel.findOne({
+        eventId: new mongoose.Types.ObjectId(eventId),
+      });
 
       if (!event) {
         throw new ApiError(StatusCodes.NOT_FOUND, "event not found");
+      }
+
+      if (!seat) {
+        throw new ApiError(StatusCodes.NOT_FOUND, "seat not found");
       }
 
       let uploadImage;
 
       if (req.file) {
         if (event?.image?.public_id) {
-          await deleteFileFromCloudinary(event.image.public_id, "image");
+          await deleteFileFromCloudinary(event.image.public_id);
         }
 
         uploadImage = await uploadFileToCloudinary(
           req.file.buffer,
-          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`,
+          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
         );
       }
 
-      const updatedEvent = await eventModel.findByIdAndUpdate(
+      const updatedEvent = await EventModel.findByIdAndUpdate(
         eventId,
         {
           $set: {
@@ -217,32 +248,45 @@ const updateEvent = asyncHandler(
               url: uploadImage?.secure_url,
               public_id: uploadImage?.public_id,
             },
-            ...req.body,
+            capacity,
+            ...rest,
           },
         },
-        { new: true },
+        { new: true }
       );
+
+      let seats = [];
+
+      for (let index = 1; index <= Number(capacity); index++) {
+        seats.push({
+          number: index,
+          isReserved: false,
+        });
+      }
+
+      seat.seats = seats as Seat;
 
       if (!updatedEvent) {
         throw new ApiError(StatusCodes.BAD_REQUEST, "Error occur while updating event document");
       }
 
+      await seat.save({ session });
       await updatedEvent.save({ session });
 
       return new ApiResponse(StatusCodes.OK, { updatedEvent }, "Event updated");
-    },
-  ),
+    }
+  )
 );
 
 const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await eventModel.findById(eventId);
+  const event = await EventModel.findById(eventId);
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  if (event.image.public_id) await deleteFileFromCloudinary(event.image.public_id, "image");
-  const deletedEvent = await eventModel.findByIdAndDelete(eventId);
+  if (event.image.public_id) await deleteFileFromCloudinary(event.image.public_id);
+  const deletedEvent = await EventModel.findByIdAndDelete(eventId);
 
   if (!deletedEvent) {
     throw new ApiError(StatusCodes.NOT_FOUND, "event does not exists");

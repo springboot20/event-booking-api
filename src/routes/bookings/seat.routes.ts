@@ -13,35 +13,17 @@ router
   .route("/book-seat/:eventId")
   .post(mongoBodyPathVariables("eventId"), validate, controllers.reserveASeat);
 
-router.route("/").get(controllers.getAllSeats);
+router
+  .route("/:eventId")
+  .get(mongoBodyPathVariables("eventId"), validate, controllers.getAllAvailableSeats);
 
 router
-  .route("/book-seats/:eventId")
-  .post(mongoBodyPathVariables("eventId"), validate, controllers.reserveSeats);
-
-router
-  .route("/user-seats/:seatId")
-  .get(mongoBodyPathVariables("seatId"), validate, controllers.fetchSeatsAssociatedWithUser);
-
-router
-  .route("/seat-numbers/add-new-seat-number")
-  .post(checkUserPermissions(ROLE.ADMIN), controllers.addNewSeat);
-
-router.route("/seat-numbers").get(controllers.getAllSeatNumbers);
-
-router
-  .route("/seat-numbers/:id")
-  .patch(
-    mongoBodyPathVariables("id"),
+  .route("/user-seat/:seatId")
+  .get(
+    mongoBodyPathVariables("seatId"),
     validate,
-    checkUserPermissions(ROLE.ADMIN),
-    controllers.updateSeatNumber,
-  )
-  .delete(
-    mongoBodyPathVariables("id"),
-    validate,
-    checkUserPermissions(ROLE.ADMIN),
-    controllers.deleteSeatNumber,
+    checkUserPermissions(ROLE.USER),
+    controllers.fetchSeatAssociatedWithUser
   );
 
 export { router };

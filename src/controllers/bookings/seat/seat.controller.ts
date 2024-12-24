@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import { seatModel } from "../../../models/index";
+import { SeatModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { CustomRequest } from "../../../types/index";
 
 const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
@@ -32,7 +32,7 @@ const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
         from: "events",
         foreignField: "_id",
         localField: "event",
-        as: "associated_event",
+        as: "event",
         pipeline: [
           {
             $project: {
@@ -46,7 +46,7 @@ const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
     },
     {
       $addFields: {
-        associated_event: { $first: "$associated_event" },
+        associated_event: { $first: "$event" },
       },
     },
   ];
@@ -56,101 +56,55 @@ const reserveASeat = asyncHandler(
   withTransactions(
     async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
       const { eventId } = req.params;
-      const { seatNumberId, reservedAt } = req.body;
+      const { seat, reservedAt } = req.body;
 
-      let reservationTime = 20 * 60 * 1000;
-
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + reservationTime);
-
-      const bookedSeat = await seatModel.find({
-        isReserved: false,
-        event: eventId,
-        seatNumber: seatNumberId,
+      const _seat = await SeatModel.findOne({
+        eventId: new mongoose.Types.ObjectId(eventId),
+        seats: [{ $in: new mongoose.Types.ObjectId(seat) }],
       });
 
-      if (!bookedSeat)
-        throw new ApiError(StatusCodes.CONFLICT, "seat has already resvered or booked");
+      if (!_seat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
 
-      const seat = await seatModel.create({
-        reservedBy: req.user?._id,
-        seatNumber: seatNumberId,
-        reservedAt,
-        event: eventId,
-        isReserved: true,
-        reservationExpiresAt: expiresAt,
-      });
+      const seatAlreadyBooked = _seat.seats.find((s) => s.isReserved);
 
-      await seat.save({ session });
+      if (seatAlreadyBooked) throw new ApiError(StatusCodes.CONFLICT, "Seat already booked");
 
-      return new ApiResponse(StatusCodes.OK, { seat }, "Seat booked successfully");
-    },
-  ),
+      _seat.seats[seat].isReserved = true;
+      _seat.reservedAt = reservedAt;
+
+      await _seat.save({ session });
+
+      return new ApiResponse(StatusCodes.OK, _seat, "all seats fetched successfully");
+    }
+  )
 );
 
-const reserveSeats = asyncHandler(
-  withTransactions(
-    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-      const { eventId } = req.params;
-      const { seatNumbers, reservedAt } = req.body;
+const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
 
-      let reservationTime = 20 * 60 * 1000;
-
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + reservationTime);
-
-      const seats = await Promise.all(
-        seatNumbers.map(async (seatNumber: string) => {
-          return seatModel.findOne({
-            isReserved: false,
-            event: eventId,
-            seatNumbers: { $in: seatNumber },
-            $or: [
-              {
-                reservedAt: { $exists: false },
-                reservationExpiresAt: { $lt: now },
-              },
-            ],
-          });
-        }),
-      );
-
-      if (seats.length !== seatNumbers.length)
-        throw new ApiError(StatusCodes.CONFLICT, "Some seats has already resvered or booked");
-
-      const new_seats = await seatModel.create({
-        reservedBy: req.user?._id,
-        seatNumbers,
-        reservedAt,
-        event: eventId,
-        isReserved: true,
-        reservationExpiresAt: expiresAt,
-      });
-
-      await new_seats.save({ session });
-
-      return new ApiResponse(StatusCodes.OK, { seats: new_seats }, "Seat booked successfully");
-    },
-  ),
-);
-
-const getAllSeats = asyncHandler(async (req: Request, res: Response) => {
-  const availableSeats = await seatModel.aggregate([
+  const seats = await SeatModel.aggregate([
     {
-      $match: {},
+      $match: {
+        eventId: new mongoose.Types.ObjectId(eventId),
+      },
     },
     {
-      $sort: {
-        updatedAt: -1,
+      $group: {
+        seats: {
+          $push: "$$ROOT",
+        },
+        totalSeats: {
+          $count: "$seats",
+        },
       },
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, { availableSeats }, "Available events fetched");
+  return new ApiResponse(StatusCodes.OK, seats, "all seats fetched successfully");
 });
 
-const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
-  const userSeatsAggregate = await seatModel.aggregate([
+const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const userSeatsAggregate = await SeatModel.aggregate([
     {
       $match: {
         reservedBy: req.user!._id,
@@ -167,4 +121,4 @@ const fetchSeatsAssociatedWithUser = asyncHandler(async (req: CustomRequest, res
   return new ApiResponse(StatusCodes.OK, { userSeats: userSeatsAggregate }, "User events fetched");
 });
 
-export { reserveSeats, reserveASeat, getAllSeats, fetchSeatsAssociatedWithUser };
+export { reserveASeat, getAllAvailableSeats, fetchSeatAssociatedWithUser };

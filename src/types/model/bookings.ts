@@ -23,7 +23,7 @@ export interface EventSchema extends Document {
 }
 
 export interface BookmarkSchema extends Document {
-  markBy: Types.ObjectId;
+  markedBy: Types.ObjectId;
   bookmarkItems: [
     {
       event: Types.ObjectId;

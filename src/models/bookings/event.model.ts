@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, Model } from "mongoose";
 import { EventSchema } from "src/types/model/bookings";
-import { bookingModel } from "./booking.model";
-import { seatModel } from "./seat.model";
+import { BookingModel } from "./booking.model";
+import { SeatModel } from "./seat.model";
 import paginate from "mongoose-paginate-v2";
 
 const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
@@ -57,20 +57,20 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
     capacity: {
       type: Number,
       required: false,
-      default: 0,
+      default: 100,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 eventSchema.plugin(paginate);
 
-const eventModel = model<EventSchema, mongoose.PaginateModel<EventSchema>>("Event", eventSchema);
+const EventModel = model<EventSchema, mongoose.PaginateModel<EventSchema>>("Event", eventSchema);
 
 eventSchema.pre("deleteMany", async function (next) {
-  await bookingModel.deleteMany({ event: this });
-  await seatModel.deleteMany({ event: this });
+  await BookingModel.deleteMany({ event: this });
+  await SeatModel.deleteMany({ eventId: this });
 
   next();
 });
-export { eventModel };
+export { EventModel };

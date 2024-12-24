@@ -1,18 +1,18 @@
-import { userModel } from "../../../models/index";
-import { asyncHandler } from "../../../utils/asyncHandler";
-import { generateTokens } from "../../../utils/jwt";
-import { ApiError } from "../../../utils/api.error";
-import { isPasswordCorrect } from "../../../utils/helpers";
-import { ApiResponse } from "../../../utils/api.response";
-import { StatusCodes } from "http-status-codes";
-import { Request, Response } from "express";
+import { UserModel } from '../../../models/index';
+import { asyncHandler } from '../../../utils/asyncHandler';
+import { generateTokens } from '../../../utils/jwt';
+import { ApiError } from '../../../utils/api.error';
+import { isPasswordCorrect } from '../../../utils/helpers';
+import { ApiResponse } from '../../../utils/api.response';
+import { StatusCodes } from 'http-status-codes';
+import { Request, Response } from 'express';
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const user = await userModel.findOne({ email });
+  const user = await UserModel.findOne({ email });
 
   if (!email && !password) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "Please provide email and password", []);
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Please provide email and password', []);
   }
 
   console.log(user!.password);
@@ -20,7 +20,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const isPasswordValid = await isPasswordCorrect(password, user!.password);
 
   if (!isPasswordValid) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid password, try again", []);
+    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid password, try again', []);
   }
 
   const { accessToken, refreshToken } = await generateTokens(res, user!._id.toString());
@@ -29,9 +29,9 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   await user!.save({ validateBeforeSave: false });
 
-  const loggedInUser = await userModel
-    .findById(user!._id)
-    .select("-password -refreshToken -emailVerificationToken -emailVerificationExpiry");
+  const loggedInUser = await UserModel.findById(user!._id).select(
+    '-password -refreshToken -emailVerificationToken -emailVerificationExpiry'
+  );
 
   return new ApiResponse(
     StatusCodes.OK,
@@ -39,6 +39,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       user: loggedInUser,
       tokens: { accessToken, refreshToken },
     },
-    "user logged in successfully",
+    'user logged in successfully'
   );
 });

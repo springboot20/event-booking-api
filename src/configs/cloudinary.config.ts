@@ -13,7 +13,7 @@ v2.config({
 
 const uploadFileToCloudinary = async (
   buffer: Buffer,
-  folder: string,
+  folder: string
 ): Promise<UploadApiResponse> => {
   return new Promise((resolve, reject) => {
     v2.uploader
@@ -28,26 +28,15 @@ const uploadFileToCloudinary = async (
   });
 };
 
-const deleteFileFromCloudinary = async (
-  public_id: string,
-  resource_type?: string,
-  type?: string,
-) => {
+const deleteFileFromCloudinary = async (public_id: string) => {
   try {
-    const deletedResource = await v2.uploader.destroy(
-      public_id,
-      {
-        resource_type,
-        type,
-      },
-      (error, result) => {
-        if (error) {
-          new ApiError(StatusCodes.BAD_REQUEST, error.message);
-        } else {
-          return result;
-        }
-      },
-    );
+    const deletedResource = await v2.uploader.destroy(public_id, (error, result) => {
+      if (error) {
+        new ApiError(StatusCodes.BAD_REQUEST, error.message);
+      } else {
+        return result;
+      }
+    });
 
     if (deletedResource.result === "not found") {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Public ID not found. Provide a valid publicId.");
@@ -56,7 +45,7 @@ const deleteFileFromCloudinary = async (
     if (deletedResource.result !== "ok") {
       throw new ApiError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        "Error while deleting existing file. Try again.",
+        "Error while deleting existing file. Try again."
       );
     }
   } catch (error: any) {

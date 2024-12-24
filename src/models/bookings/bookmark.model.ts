@@ -1,35 +1,33 @@
-import { Schema, model, Model } from "mongoose";
-import paginate from "mongoose-paginate-v2";
-import { BookmarkSchema } from "src/types/model/bookings";
+import { Schema, model, Model } from 'mongoose';
+import paginate from 'mongoose-paginate-v2';
+import { BookmarkSchema } from '../../types/model/bookings';
 
 const bookmarkSchema = new Schema<BookmarkSchema, Model<BookmarkSchema>>(
   {
-    markBy: {
+    markedBy: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
     bookmarkItems: {
       type: [
         {
           event: {
             type: Schema.Types.ObjectId,
-            ref: "Event",
+            ref: 'Event',
           },
           ticket: {
             type: Number,
-            required: true,
-            min: [1, "ticket must not less than 1"],
             default: 1,
           },
         },
       ],
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 bookmarkSchema.plugin(paginate);
 
-const bookmarkModel = model<BookmarkSchema>("Bookmark", bookmarkSchema);
+const BookmarkModel = model<BookmarkSchema>('Bookmark', bookmarkSchema);
 
-export { bookmarkModel };
+export { BookmarkModel };

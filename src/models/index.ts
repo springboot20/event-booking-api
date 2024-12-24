@@ -1,16 +1,8 @@
-import { userModel } from "./auth/user.model";
-import { eventModel } from "./bookings/event.model";
-import { bookingModel } from "./bookings/booking.model";
-import { seatModel, seatNumberModel } from "./bookings/seat.model";
-import { eventCategory } from "./bookings/category.model";
-import { bookmarkModel } from "./bookings/bookmark.model";
+import { UserModel } from './auth/user.model';
+import { EventModel } from './bookings/event.model';
+import { BookingModel } from './bookings/booking.model';
+import { SeatModel } from './bookings/seat.model';
+import { EventCategoryModel } from './bookings/category.model';
+import { BookmarkModel } from './bookings/bookmark.model';
 
-export {
-  eventCategory,
-  userModel,
-  eventModel,
-  bookingModel,
-  seatNumberModel,
-  seatModel,
-  bookmarkModel,
-};
+export { EventCategoryModel, UserModel, EventModel, BookingModel, SeatModel, BookmarkModel };

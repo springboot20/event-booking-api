@@ -1,6 +1,6 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from 'mongoose';
 
-const eventCategorySchema = new Schema(
+const EventCategoryModelSchema = new Schema(
   {
     name: {
       type: String,
@@ -8,10 +8,10 @@ const eventCategorySchema = new Schema(
     },
     owner: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
-export const eventCategory = model("Category", eventCategorySchema);
+export const EventCategoryModel = model('Category', EventCategoryModelSchema);

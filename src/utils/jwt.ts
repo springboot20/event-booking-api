@@ -1,5 +1,5 @@
 import jsonwebtoken from 'jsonwebtoken';
-import { userModel } from '../models/index';
+import { UserModel } from '../models/index';
 import { ApiError } from './api.error';
 import { StatusCodes } from 'http-status-codes';
 import { User } from '../types';
@@ -30,7 +30,7 @@ const generateRefreshToken = (payload: { _id: string }) => {
 };
 
 const generateTokens = async (res: Response, userId: string) => {
-  const user = await userModel.findById(userId);
+  const user = await UserModel.findById(userId);
 
   if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not found', []);
