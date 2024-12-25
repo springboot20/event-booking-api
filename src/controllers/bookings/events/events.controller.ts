@@ -169,7 +169,7 @@ const getAllEvents = asyncHandler(async (req: Request, res: Response) => {
     })
   );
 
-  return new ApiResponse(StatusCodes.OK, { events }, "all events fetched");
+  return new ApiResponse(StatusCodes.OK, events, "all events fetched");
 });
 
 const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => {
@@ -195,7 +195,7 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, { category: event_category }, "Available events fetched");
+  return new ApiResponse(StatusCodes.OK, event_category, "Available events fetched");
 });
 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
@@ -205,7 +205,7 @@ const getEventById = asyncHandler(async (req: Request, res: Response) => {
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  return new ApiResponse(StatusCodes.OK, { event }, "event fetched");
+  return new ApiResponse(StatusCodes.OK, event, "event fetched");
 });
 
 const updateEvent = asyncHandler(
@@ -273,7 +273,7 @@ const updateEvent = asyncHandler(
       await seat.save({ session });
       await updatedEvent.save({ session });
 
-      return new ApiResponse(StatusCodes.OK, { updatedEvent }, "Event updated");
+      return new ApiResponse(StatusCodes.OK, updatedEvent, "Event updated");
     }
   )
 );

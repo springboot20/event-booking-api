@@ -12,7 +12,7 @@ export const getBookmark = async (userId: string) => {
   const userBookmark = await BookmarkModel.aggregate([
     {
       $match: {
-        markBy: new mongoose.Types.ObjectId(userId),
+        markedBy: new mongoose.Types.ObjectId(userId),
       },
     },
     {
@@ -77,7 +77,7 @@ export const addEventToBookmark = asyncHandler(
     });
 
     const event = await EventModel.findById(eventId).session(session);
-    if (!event) throw new ApiError(StatusCodes.NOT_FOUND, 'product not found');
+    if (!event) throw new ApiError(StatusCodes.NOT_FOUND, 'event not found');
 
     if (ticket > event.capacity) {
       throw new ApiError(
