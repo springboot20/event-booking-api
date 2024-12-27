@@ -2,8 +2,8 @@ import { Document, Types } from "mongoose";
 
 export interface EventSchema extends Document {
   image: {
-    url: string;
-    public_id: string;
+    url: string | null;
+    public_id: string | null;
   };
   title: string;
   description: string;
@@ -28,6 +28,6 @@ export interface BookmarkSchema extends Document {
     {
       event: Types.ObjectId;
       ticket: number;
-    },
+    }
   ];
 }

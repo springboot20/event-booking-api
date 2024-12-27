@@ -82,7 +82,7 @@ export const addEventToBookmark = asyncHandler(
     if (ticket > event.capacity) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
-        `only ${event.capacity} is remaining. But you are board ${ticket}. Event out of capacity`
+        `only ${event.capacity} is remaining. But you board ${ticket}. Event out of capacity`
       );
     }
 
