@@ -66,7 +66,7 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
 
   if (!_seat || !isSeat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
 
-  if (isSeat?.isReserved) throw new ApiError(StatusCodes.CONFLICT, "Seat already booked");
+  if (isSeat?.isReserved) throw new ApiResponse(StatusCodes.CONFLICT, {}, "Seat already booked");
 
   isSeat.isReserved = true;
   _seat.reservedAt = reservedAt;
