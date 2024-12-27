@@ -94,7 +94,11 @@ const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Respon
 
   console.log(_seats);
 
-  return new ApiResponse(StatusCodes.OK, {}, "all seats fetched successfully");
+  return new ApiResponse(
+    StatusCodes.OK,
+    isReserved !== undefined ? _seats : seats,
+    "all seats fetched successfully"
+  );
 });
 
 const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
