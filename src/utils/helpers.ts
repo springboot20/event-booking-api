@@ -38,13 +38,13 @@ const isPasswordCorrect = async function (enteredPassword: string, password: str
   return await bcrypt.compare(enteredPassword, password);
 };
 
-const generateTemporaryToken = async function () {
+const generateTemporaryToken = () => {
   const unHashedToken = crypto.randomBytes(10).toString("hex");
 
-  const salt = await bcrypt.genSalt(20);
+  const salt = bcrypt.genSaltSync(10); // Use synchronous version for hashing
+  const hashedToken = bcrypt.hashSync(unHashedToken, salt);
 
-  const hashedToken = await bcrypt.hash(unHashedToken, salt);
-  const tokenExpiry = Date.now() + 5 * 60 * 1000;
+  const tokenExpiry = Date.now() + 2 * 60 * 1000; // 2 minutes from now
 
   return { unHashedToken, hashedToken, tokenExpiry };
 };

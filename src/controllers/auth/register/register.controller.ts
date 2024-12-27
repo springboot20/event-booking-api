@@ -24,23 +24,22 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     email,
     password,
     role: role || ROLE.USER,
-    isEmailVerified: false,
   });
 
-  const { unHashedToken, hashedToken, tokenExpiry } = await generateTemporaryToken();
+  const { unHashedToken, hashedToken, tokenExpiry } = generateTemporaryToken();
   user.emailVerificationToken = hashedToken;
-  user.emailVerificationExpiry = tokenExpiry as unknown as Date;
+  user.emailVerificationExpiry = tokenExpiry;
 
   await user.save({ validateBeforeSave: false });
 
-  const verifyLink = `${req.protocol}://${req.get("host")}/api/v1/verify-email/${unHashedToken}`;
+  // // const verifyLink = `${req.protocol}://${req.get("host")}/api/v1/verify-email/${unHashedToken}`;
 
-  // await sendMail(
-  //   user?.email,
-  //   "Email verification",
-  //   { username: user?.username, verificationLink: verifyLink },
-  //   "emailVerificationTemplate"
-  // );
+  // // await sendMail(
+  // //   user?.email,
+  // //   "Email verification",
+  // //   { username: user?.username, verificationLink: verifyLink },
+  // //   "emailVerificationTemplate"
+  // // );
 
   const createdUser = await UserModel.findById(user._id).select(
     "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"

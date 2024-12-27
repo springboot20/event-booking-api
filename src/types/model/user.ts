@@ -8,9 +8,9 @@ export interface UserSchema extends Document {
   refreshToken: string;
   isEmailVerified: boolean;
   emailVerificationToken: string | undefined;
-  emailVerificationExpiry: Date | undefined;
+  emailVerificationExpiry: Date | number |  undefined;
   forgotPasswordToken: string | undefined;
-  forgotPasswordExpiry: Date | undefined;
+  forgotPasswordExpiry: Date | number |  undefined;
   loginType: string;
   isAuthenticated: boolean;
   avatar: {

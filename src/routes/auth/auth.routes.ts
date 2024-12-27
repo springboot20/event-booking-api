@@ -16,7 +16,7 @@ const router = express.Router();
  * UNPROTECTED ROUTES
  */
 
-router.route("/register").post(userRegistrationValidator(), validate, controllers.register);
+router.route("/register").post( controllers.register);
 
 router.route("/login").post(userLoginValidator(), validate, controllers.login);
 
