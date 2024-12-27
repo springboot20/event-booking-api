@@ -45,94 +45,85 @@ const pipelineAggregation = (): mongoose.PipelineStage[] => {
   ];
 };
 
-const createEvent = asyncHandler(
-  withTransactions(
-    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-      const owner = req.user?._id;
+const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const owner = req.user?._id;
 
-      const {
-        title,
-        description,
-        price,
-        location,
-        eventDate,
-        category,
-        from,
-        to,
-        featured,
-        capacity,
-        ticket_type,
-      } = req.body;
+  const {
+    title,
+    description,
+    price,
+    location,
+    eventDate,
+    category,
+    from,
+    to,
+    featured,
+    capacity,
+    ticket_type,
+  } = req.body;
 
-      if (!req.file) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
-      }
+  // if (!req.file) {
+  //   throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
+  // }
 
-      let uploadImage;
+  let uploadImage;
 
-      if (req.file) {
-        uploadImage = await uploadFileToCloudinary(
-          req.file.buffer,
-          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
-        );
-      }
+  // if (req.file) {
+  //   uploadImage = await uploadFileToCloudinary(
+  //     req.file.buffer,
+  //     `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
+  //   );
+  // }
 
-      const event_category = await EventCategoryModel.findById(category);
+  const event_category = await EventCategoryModel.findById(category);
 
-      if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
+  if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
 
-      const createdEvent = await EventModel.create({
-        title,
-        image: {
-          url: uploadImage?.secure_url,
-          public_id: uploadImage?.public_id,
-        },
-        owner,
-        description,
-        location,
-        category,
-        eventDate,
-        ticket_type,
-        price,
-        featured,
-        time: {
-          from,
-          to,
-        },
-        capacity,
-      });
+  // image: {
+  //   url: uploadImage?.secure_url,
+  //   public_id: uploadImage?.public_id,
+  // },
+  const createdEvent = await EventModel.create({
+    title,
+    owner,
+    description,
+    location,
+    category,
+    eventDate,
+    ticket_type,
+    price,
+    featured,
+    time: {
+      from,
+      to,
+    },
+    capacity,
+  });
 
-      let seats = [];
+  let seats = [];
 
-      for (let index = 1; index <= Number(capacity); index++) {
-        seats.push({
-          number: index,
-          isReserved: false,
-        });
-      }
+  for (let index = 1; index <= Number(capacity); index++) {
+    seats.push({
+      number: index,
+      isReserved: false,
+    });
+  }
 
-      await SeatModel.create(
-        {
-          seats: seats as Seat,
-          eventId: createdEvent._id,
-        },
-        { session }
-      );
+  await SeatModel.create({
+    seats: seats as Seat,
+    eventId: createdEvent._id,
+  });
 
-      await createdEvent.save({ session });
+  await createdEvent.save();
 
-      if (!createdEvent) {
-        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
-      }
+  if (!createdEvent) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
+  }
 
-      return res
-        .status(StatusCodes.OK)
-        .json(
-          new ApiResponse(StatusCodes.OK, { event: createdEvent }, "Event created successfully")
-        );
-    }
-  )
-);
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, { event: createdEvent }, "Event created successfully"));
+});
 
 const searchForAvailableEvents = asyncHandler(async (req: Request, res: Response) => {
   const { title } = req.body;
