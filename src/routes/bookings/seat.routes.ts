@@ -3,7 +3,10 @@ import * as controllers from "../../controllers/index";
 import { checkUserPermissions, verifyJWT } from "../../middlewares/auth.middleware";
 import { ROLE } from "../../types/model/user";
 import { validate } from "../../middlewares/validator.middleware";
-import { mongoBodyPathVariables } from "../../validator/params/parame.validator";
+import {
+  mongoBodyPathVariables,
+  mongoParamsPathVariables,
+} from "../../validator/params/parame.validator";
 
 const router = express.Router();
 
@@ -11,11 +14,11 @@ router.use(verifyJWT);
 
 router
   .route("/book-seat/:eventId")
-  .post(mongoBodyPathVariables("eventId"), validate, controllers.reserveASeat);
+  .post(mongoParamsPathVariables("eventId"), validate, controllers.reserveASeat);
 
 router
   .route("/:eventId")
-  .get(mongoBodyPathVariables("eventId"), validate, controllers.getAllAvailableSeats);
+  .get(mongoParamsPathVariables("eventId"), validate, controllers.getAllAvailableSeats);
 
 router
   .route("/user-seat/:seatId")

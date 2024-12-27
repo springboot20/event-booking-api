@@ -15,10 +15,8 @@ import { connectToDatabase } from "./db/connection";
 import * as routes from "./routes/index";
 
 const app = express();
-const PORT =  4040;
+const PORT = process.env.PORT ?? 4040;
 const httpServer = http.createServer(app);
-
-// process.env.PORT ??
 
 mongoose.connection.on("connected", () => {
   console.log("Mongodb connected ....");
@@ -36,7 +34,7 @@ app.use(
     secret: process.env.EXPRESS_SESSION_SECRET as string,
     resave: false,
     saveUninitialized: true,
-  }),
+  })
 );
 
 app.use(cookieParser(process.env.EXPRESS_SESSION_SECRET));
@@ -45,7 +43,7 @@ app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true,
-  }),
+  })
 );
 app.use(passport.initialize());
 app.use(passport.session());

@@ -52,32 +52,29 @@ const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
   ];
 };
 
-const reserveASeat = asyncHandler(
-  withTransactions(
-    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-      const { eventId } = req.params;
-      const { seat, reservedAt } = req.body;
+const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
+  const { seat, reservedAt } = req.body;
 
-      const _seat = await SeatModel.findOne({
-        eventId: new mongoose.Types.ObjectId(eventId),
-        seats: [{ $in: new mongoose.Types.ObjectId(seat) }],
-      });
+  const _seat = await SeatModel.findOne({
+    eventId: new mongoose.Types.ObjectId(eventId),
+  });
 
-      if (!_seat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
+  // check seat in seats
 
-      const seatAlreadyBooked = _seat.seats.find((s) => s.isReserved);
+  let isSeat = _seat?.seats.find((s) => s?._id?.toString() === seat);
 
-      if (seatAlreadyBooked) throw new ApiError(StatusCodes.CONFLICT, "Seat already booked");
+  if (!_seat || !isSeat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
 
-      _seat.seats[seat].isReserved = true;
-      _seat.reservedAt = reservedAt;
+  if (isSeat?.isReserved) throw new ApiError(StatusCodes.CONFLICT, "Seat already booked");
 
-      await _seat.save({ session });
+  isSeat.isReserved = true;
+  _seat.reservedAt = reservedAt;
 
-      return new ApiResponse(StatusCodes.OK, _seat, "all seats fetched successfully");
-    }
-  )
-);
+  await _seat.save();
+
+  return new ApiResponse(StatusCodes.OK, {}, "seat booked successfully");
+});
 
 const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
@@ -88,19 +85,9 @@ const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Respon
         eventId: new mongoose.Types.ObjectId(eventId),
       },
     },
-    {
-      $group: {
-        seats: {
-          $push: "$$ROOT",
-        },
-        totalSeats: {
-          $count: "$seats",
-        },
-      },
-    },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, seats, "all seats fetched successfully");
+  return new ApiResponse(StatusCodes.OK, seats[0], "all seats fetched successfully");
 });
 
 const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
@@ -118,7 +105,11 @@ const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res:
     },
   ]);
 
-  return new ApiResponse(StatusCodes.OK, { userSeats: userSeatsAggregate }, "User events fetched");
+  return new ApiResponse(
+    StatusCodes.OK,
+    { userSeats: userSeatsAggregate[0] },
+    "User events fetched"
+  );
 });
 
 export { reserveASeat, getAllAvailableSeats, fetchSeatAssociatedWithUser };
