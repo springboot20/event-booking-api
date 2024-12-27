@@ -30,15 +30,11 @@ const userLoginValidator = () => {
       .withMessage("email is required")
       .isEmail()
       .withMessage("invalid email format entered"),
-    body("password")
-      .trim()
-      .isString()
-      .notEmpty()
-      .withMessage("password is required")
-      .matches(passwordReg)
-      .withMessage(
-        "password must be at least 6 long in length and it is expected to contain digits, letter",
-      ),
+    body("password").trim().isString().notEmpty().withMessage("password is required"),
+    // .matches(passwordReg)
+    // .withMessage(
+    //   "password must be at least 6 long in length and it is expected to contain digits, letter",
+    // ),
   ];
 };
 

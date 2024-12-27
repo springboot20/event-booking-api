@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { CustomRequest } from "src/types";
+import { CustomRequest } from "../types";
 
 const asyncHandler = (fn: Function) => {
   return async (req: Request | CustomRequest, res: Response, next: NextFunction) => {
@@ -11,7 +11,7 @@ const asyncHandler = (fn: Function) => {
       });
 
       if (!res.headersSent && !nextCalled) {
-        return res.status(200).json(result);
+        res.status(200).json(result);
       }
     } catch (error) {
       next(error);

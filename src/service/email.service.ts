@@ -1,7 +1,7 @@
-import { google } from 'googleapis';
-import nodemailer from 'nodemailer';
-import expressHandlebars from 'nodemailer-express-handlebars';
-import path from 'path';
+import { google } from "googleapis";
+import nodemailer from "nodemailer";
+import expressHandlebars from "nodemailer-express-handlebars";
+import path from "path";
 
 const OAuth2 = google.auth.OAuth2;
 
@@ -35,20 +35,20 @@ const createTransporter = async () => {
       OAuth2Client.setCredentials({
         access_token: refreshedAccessToken,
         refresh_token: process.env.REFRESH_TOKEN,
-        token_type: 'Bearer',
+        token_type: "Bearer",
         expiry_date: OAuth2Client.credentials.expiry_date,
       });
     } else {
-      console.error('Failed to refresh access token');
+      console.error("Failed to refresh access token");
       return null;
     }
   }
 
   return nodemailer.createTransport({
     // @ts-ignore
-    service: 'gmail',
+    service: "gmail",
     auth: {
-      type: 'OAuth2',
+      type: "OAuth2",
       user: process.env.EMAIL,
       pass: process.env.EMAIL_HOST_PASSWORD,
       accessToken: OAuth2Client.credentials.access_token,
@@ -67,16 +67,16 @@ const sendMail = async (email: string, subject: string, payload: any, template: 
     const transporter = await createTransporter();
 
     transporter.use(
-      'compile',
+      "compile",
       expressHandlebars({
         viewEngine: {
-          extname: '.hbs',
-          partialsDir: path.resolve(__dirname, '../views/partials/'),
-          layoutsDir: path.resolve(__dirname, '../views/layouts/'),
-          defaultLayout: 'layout',
+          extname: ".hbs",
+          partialsDir: path.resolve(__dirname, "../views/partials/"),
+          layoutsDir: path.resolve(__dirname, "../views/layouts/"),
+          defaultLayout: "layout",
         },
-        extName: '.hbs',
-        viewPath: path.resolve(__dirname, '../views/partials/'),
+        extName: ".hbs",
+        viewPath: path.resolve(__dirname, "../views/partials/"),
       })
     );
 
@@ -91,7 +91,7 @@ const sendMail = async (email: string, subject: string, payload: any, template: 
     };
     const info = await transporter.sendMail(options());
 
-    console.log('Message Id : %s' + info.messageId);
+    console.log("Message Id : %s" + info.messageId);
   } catch (error) {
     console.log(`${error}`);
   }
