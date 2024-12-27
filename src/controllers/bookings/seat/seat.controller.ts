@@ -78,16 +78,23 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
 
 const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
+  const { isReserved } = req.body;
 
-  const seats = await SeatModel.aggregate([
-    {
-      $match: {
-        eventId: new mongoose.Types.ObjectId(eventId),
-      },
-    },
-  ]);
+  let filter: any = {};
 
-  return new ApiResponse(StatusCodes.OK, seats[0], "all seats fetched successfully");
+  if (isReserved !== undefined) {
+    filter.isReserved = JSON.parse(isReserved as string);
+  }
+
+  const seats = await SeatModel.findOne({
+    eventId: new mongoose.Types.ObjectId(eventId),
+  });
+
+  const _seats = seats?.seats?.filter((s) => s.isReserved === filter.isReserved);
+
+  console.log(_seats);
+
+  return new ApiResponse(StatusCodes.OK, {}, "all seats fetched successfully");
 });
 
 const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {

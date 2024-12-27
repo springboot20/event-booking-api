@@ -25,8 +25,6 @@ const verifyJWT = asyncHandler(async (req: Request, res: Response, next: NextFun
       throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid Token provided');
     }
 
-    console.log(user);
-
     req.user = user;
     next();
   } catch (error) {
