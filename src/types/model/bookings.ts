@@ -24,10 +24,8 @@ export interface EventSchema extends Document {
 
 export interface BookmarkSchema extends Document {
   markedBy: Types.ObjectId;
-  bookmarkItems: [
-    {
-      event: Types.ObjectId;
-      ticket: number;
-    }
-  ];
+  bookmarkItems: Types.DocumentArray< {
+    event: Types.ObjectId;
+    ticket: number;
+  }>
 }

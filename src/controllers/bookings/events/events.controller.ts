@@ -281,7 +281,8 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  if (event.image.public_id) await deleteFileFromCloudinary(event.image.public_id);
+  if (event.image.public_id && event.image.public_id !== null) await deleteFileFromCloudinary(event.image.public_id);
+  
   const deletedEvent = await EventModel.findByIdAndDelete(eventId);
 
   if (!deletedEvent) {
