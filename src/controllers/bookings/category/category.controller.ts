@@ -9,9 +9,7 @@ import { CustomRequest } from "../../../types/index";
 export const addEventCategoryModel = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { name } = req.body;
 
-  const normalizedName = name.trim().toLowerCase();
-
-  const existingCategory = await EventCategoryModel.findOne({ name: normalizedName });
+  const existingCategory = await EventCategoryModel.findOne({ name });
 
   if (existingCategory)
     return new ApiResponse(

@@ -62,8 +62,6 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     ticket_type,
   } = req.body;
 
-  const normalizedCategoryName = category.trim().toLowerCase();
-
   // if (!req.file) {
   //   throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
   // }
@@ -77,11 +75,11 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   //   );
   // }
 
-  let event_category = await EventCategoryModel.findOne({ name: normalizedCategoryName });
+  let event_category = await EventCategoryModel.findOne({ name: category });
 
   if (!event_category) {
     event_category = await EventCategoryModel.create({
-      name: normalizedCategoryName,
+      name: category,
       owner: req?.user?._id,
     });
   }
