@@ -66,7 +66,7 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
 
   if (!_seat || !isSeat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
 
-  if (isSeat?.isReserved) throw new ApiResponse(StatusCodes.CONFLICT, {}, "Seat already booked");
+  if (isSeat?.isReserved) return new ApiResponse(StatusCodes.CONFLICT, {}, "Seat already booked");
 
   isSeat.isReserved = true;
   _seat.reservedAt = reservedAt;
@@ -77,26 +77,27 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
 });
 
 const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Response) => {
-  const { eventId } = req.params;
-  const { isReserved } = req.body;
+  const { eventId, isReserved } = req.query;
 
   let filter: any = {};
 
-  if (isReserved !== undefined) {
+  if (isReserved !== undefined && isReserved !== "") {
     filter.isReserved = JSON.parse(isReserved as string);
   }
 
   const seats = await SeatModel.findOne({
-    eventId: new mongoose.Types.ObjectId(eventId),
+    eventId: new mongoose.Types.ObjectId(eventId as string),
   });
 
-  const _seats = seats?.seats?.filter((s) => s.isReserved === filter.isReserved);
-
-  console.log(_seats);
+  const _seats = seats?.seats?.filter((s) => {
+    if (filter.isReserved !== "") {
+      return s.isReserved === filter.isReserved;
+    }
+  });
 
   return new ApiResponse(
     StatusCodes.OK,
-    isReserved !== undefined ? _seats : seats,
+    isReserved !== undefined && isReserved !== "" ? _seats : seats,
     "all seats fetched successfully"
   );
 });

@@ -62,6 +62,8 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     ticket_type,
   } = req.body;
 
+  const normalizedCategoryName = category.trim().toLowerCase();
+
   // if (!req.file) {
   //   throw new ApiError(StatusCodes.NOT_FOUND, "no image uploaded");
   // }
@@ -75,9 +77,14 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   //   );
   // }
 
-  const event_category = await EventCategoryModel.findById(category);
+  let event_category = await EventCategoryModel.findOne({ name: normalizedCategoryName });
 
-  if (!event_category) throw new ApiError(StatusCodes.NOT_FOUND, "category does not exist");
+  if (!event_category) {
+    event_category = await EventCategoryModel.create({
+      name: normalizedCategoryName,
+      owner: req?.user?._id,
+    });
+  }
 
   // image: {
   //   url: uploadImage?.secure_url,
@@ -88,7 +95,7 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     owner,
     description,
     location,
-    category,
+    category: event_category?._id,
     eventDate,
     ticket_type,
     price,
