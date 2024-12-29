@@ -204,75 +204,92 @@ const getEventById = asyncHandler(async (req: Request, res: Response) => {
   return new ApiResponse(StatusCodes.OK, event, "event fetched");
 });
 
-const updateEvent = asyncHandler(
-  withTransactions(
-    async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-      const { eventId } = req.params;
-      const { capacity, ...rest } = req.body;
+const updateEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
+  const { capacity, category, ...rest } = req.body;
 
-      const event = await EventModel.findById(eventId).session(session);
-      const seat = await SeatModel.findOne({
-        eventId: new mongoose.Types.ObjectId(eventId),
+  const event = await EventModel.findById(eventId);
+  const seat = await SeatModel.findOne({
+    eventId: new mongoose.Types.ObjectId(eventId),
+  });
+
+  if (!event) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "event not found");
+  }
+
+  if (!seat) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "seat not found");
+  }
+
+  let uploadImage;
+  let updatedFields = {
+    owner: req?.user?._id,
+    category: event?.category,
+    capacity,
+    ...rest,
+  };
+
+  if (req.file) {
+    if (event?.image?.public_id) {
+      await deleteFileFromCloudinary(event.image.public_id);
+    }
+
+    uploadImage = await uploadFileToCloudinary(
+      req.file.buffer,
+      `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
+    );
+
+    updatedFields.image = {
+      url: uploadImage?.secure_url,
+      public_id: uploadImage?.public_id,
+    };
+  }
+
+  // Handle category update
+  if (category) {
+    const normalizedCategoryName = category.trim().toLowerCase();
+
+    let existingCategory = await EventCategoryModel.findOne({ name: normalizedCategoryName });
+    if (!existingCategory) {
+      existingCategory = await EventCategoryModel.create({
+        name: normalizedCategoryName,
+        owner: req.user?._id,
       });
 
-      if (!event) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "event not found");
-      }
-
-      if (!seat) {
-        throw new ApiError(StatusCodes.NOT_FOUND, "seat not found");
-      }
-
-      let uploadImage;
-
-      if (req.file) {
-        if (event?.image?.public_id) {
-          await deleteFileFromCloudinary(event.image.public_id);
-        }
-
-        uploadImage = await uploadFileToCloudinary(
-          req.file.buffer,
-          `${process.env.CLOUDINARY_BASE_FOLDER}/events-image`
-        );
-      }
-
-      const updatedEvent = await EventModel.findByIdAndUpdate(
-        eventId,
-        {
-          $set: {
-            image: {
-              url: uploadImage?.secure_url,
-              public_id: uploadImage?.public_id,
-            },
-            capacity,
-            ...rest,
-          },
-        },
-        { new: true }
-      );
-
-      let seats = [];
-
-      for (let index = 1; index <= Number(capacity); index++) {
-        seats.push({
-          number: index,
-          isReserved: false,
-        });
-      }
-
-      seat.seats = seats as Seat;
-
-      if (!updatedEvent) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Error occur while updating event document");
-      }
-
-      await seat.save({ session });
-      await updatedEvent.save({ session });
-
-      return new ApiResponse(StatusCodes.OK, updatedEvent, "Event updated");
+      updatedFields.category = existingCategory?._id;
+    } else {
+      updatedFields.category = existingCategory?._id;
     }
-  )
-);
+  }
+
+  const updatedEvent = await EventModel.findByIdAndUpdate(
+    eventId,
+    {
+      $set: updatedFields,
+    },
+    { new: true }
+  );
+
+  let seats = [];
+
+  for (let index = 1; index <= Number(capacity); index++) {
+    seats.push({
+      number: index,
+      isReserved: false,
+    });
+  }
+
+  seat.seats = seats as Seat;
+
+  if (!updatedEvent) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Error occur while updating event document");
+  }
+
+  await seat.save();
+  await updatedEvent.save();
+
+  return new ApiResponse(StatusCodes.OK, updatedEvent, "Event updated");
+});
 
 const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
@@ -281,9 +298,19 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 
-  if (event.image.public_id && event.image.public_id !== null) await deleteFileFromCloudinary(event.image.public_id);
-  
+  if (event.image.public_id && event.image.public_id !== null)
+    await deleteFileFromCloudinary(event.image.public_id);
+
   const deletedEvent = await EventModel.findByIdAndDelete(eventId);
+  const deletedEventSeat = await SeatModel.deleteOne({
+    eventId,
+  });
+
+  if (!deletedEventSeat) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "seat does not exists");
+  }
+
+  console.log(deletedEventSeat);
 
   if (!deletedEvent) {
     throw new ApiError(StatusCodes.NOT_FOUND, "event does not exists");

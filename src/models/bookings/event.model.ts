@@ -71,10 +71,4 @@ eventSchema.plugin(paginate);
 
 const EventModel = model<EventSchema, mongoose.PaginateModel<EventSchema>>("Event", eventSchema);
 
-eventSchema.pre("deleteMany", async function (next) {
-  await BookingModel.deleteMany({ event: this });
-  await SeatModel.deleteMany({ eventId: this });
-
-  next();
-});
 export { EventModel };
