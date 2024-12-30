@@ -15,9 +15,9 @@ import { connectToDatabase } from "./db/connection";
 import * as routes from "./routes/index";
 
 const app = express();
-const PORT = 4040;
+const PORT = process.env.PORT ?? 4040;
 const httpServer = http.createServer(app);
-// process.env.PORT ?? 
+
 mongoose.connection.on("connected", () => {
   console.log("Mongodb connected ....");
 });

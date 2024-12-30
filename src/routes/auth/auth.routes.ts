@@ -16,7 +16,7 @@ const router = express.Router();
  * UNPROTECTED ROUTES
  */
 
-router.route("/register").post( controllers.register);
+router.route("/register").post(controllers.register);
 
 router.route("/login").post(userLoginValidator(), validate, controllers.login);
 
@@ -30,7 +30,7 @@ router
     mongoParamsPathVariables("id"),
     mongoParamsPathVariables("token"),
     validate,
-    controllers.verifyEmail,
+    controllers.verifyEmail
   );
 
 /**
@@ -48,6 +48,7 @@ router
   .post(mongoParamsPathVariables("resetToken"), validate, verifyJWT, controllers.resetPassword);
 
 router.route("/current-user").get(verifyJWT, controllers.getCurrentUser);
+router.route("/refresh-access-token").post(controllers.refreshAccessToken);
 
 router
   .route("/upload-avatar")

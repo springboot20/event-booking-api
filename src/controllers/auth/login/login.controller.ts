@@ -28,7 +28,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   await user!.save({ validateBeforeSave: false });
 
   const loggedInUser = await UserModel.findById(user!._id).select(
-    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry"
+    "-password -emailVerificationToken -emailVerificationExpiry"
   );
 
   return new ApiResponse(
