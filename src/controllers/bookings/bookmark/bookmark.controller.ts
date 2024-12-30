@@ -131,6 +131,7 @@ export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, r
       $pull: {
         bookmarkItems: {
           event: new mongoose.Types.ObjectId(eventId),
+          seats: [],
         },
       },
     },
