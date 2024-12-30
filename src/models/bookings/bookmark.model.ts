@@ -1,8 +1,7 @@
-import { Schema, model, Model } from "mongoose";
+import { Schema, model } from "mongoose";
 import paginate from "mongoose-paginate-v2";
-import { BookmarkSchema } from "../../types/model/bookings";
 
-const bookmarkSchema = new Schema<BookmarkSchema, Model<BookmarkSchema>>(
+const bookmarkSchema = new Schema(
   {
     markedBy: {
       type: Schema.Types.ObjectId,
@@ -16,8 +15,7 @@ const bookmarkSchema = new Schema<BookmarkSchema, Model<BookmarkSchema>>(
             ref: "Event",
           },
           seats: {
-            types: [Schema.Types.ObjectId],
-            default: [],
+            type: [Schema.Types.ObjectId],
           },
         },
       ],
@@ -28,6 +26,6 @@ const bookmarkSchema = new Schema<BookmarkSchema, Model<BookmarkSchema>>(
 
 bookmarkSchema.plugin(paginate);
 
-const BookmarkModel = model<BookmarkSchema>("Bookmark", bookmarkSchema);
+const BookmarkModel = model("Bookmark", bookmarkSchema);
 
 export { BookmarkModel };

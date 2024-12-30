@@ -29,6 +29,9 @@ export const getBookmark = async (userId: string) => {
       $project: {
         event: { $first: "$event" },
         seats: "$bookmarkItems.seats",
+        totalSeats: {
+          $size: "$bookmarkItems.seats",
+        },
       },
     },
     {
@@ -39,9 +42,14 @@ export const getBookmark = async (userId: string) => {
         },
         totalBookmark: {
           $sum: {
-            $multiply: ["$event.price", "$seats.length"],
+            $multiply: ["$event.price", "$totalSeats"],
           },
         },
+      },
+    },
+    {
+      $project: {
+        totalSeats: 0,
       },
     },
     {
@@ -68,7 +76,7 @@ export const getUserBookmark = asyncHandler(async (req: CustomRequest, res: Resp
 
 export const addEventToBookmark = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
-  const { seats = [] } = req.body;
+  const { seats } = req.body;
 
   const bookmark = await BookmarkModel.findOne({
     markedBy: req.user?._id,
@@ -84,18 +92,20 @@ export const addEventToBookmark = asyncHandler(async (req: CustomRequest, res: R
     );
   }
 
-  const addedEvent = bookmark?.bookmarkItems?.find((e) => e.event.toString() === eventId);
+  let newSeats = [...new Set([...seats])];
+
+  const addedEvent = bookmark?.bookmarkItems?.find((e: any) => e.event.toString() === eventId);
 
   if (addedEvent) {
-    for (let seat = 1; seat < seats.length; seat++) {
-      addedEvent?.seats?.push(seats[seat]);
-    }
+    addedEvent.seats = newSeats;
   } else {
     bookmark?.bookmarkItems.push({
       event: new mongoose.Types.ObjectId(eventId),
-      seats: [...seats],
+      seats: newSeats,
     });
   }
+
+  console.log(addedEvent);
 
   await bookmark?.save({ validateBeforeSave: false });
 
