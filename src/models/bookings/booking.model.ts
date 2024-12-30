@@ -1,34 +1,36 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 enum Status {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  PENDING = "PENDING",
+  COMPLETED = "COMPLETED",
+  FAILED = "FAILED",
 }
 
 const bookingSchema = new Schema(
   {
     bookedBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
     },
-    bookingItems: {
-      type: [
-        {
-          ticket: {
-            type: Number,
-            required: true,
-            min: [1, 'ticket must not less than 1'],
-            default: 1,
-          },
-          eventId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Event',
-          },
-        },
-      ],
+    seats: {
+      type: [String],
       default: [],
+    },
+    eventId: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
+    },
+    bookingPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    bookingId: {
+      type: String,
+    },
+    paymentMethod: {
+      type: String,
     },
     status: {
       type: String,
@@ -39,4 +41,4 @@ const bookingSchema = new Schema(
   { timestamps: true }
 );
 
-export const BookingModel = model('Booking', bookingSchema);
+export const BookingModel = model("Booking", bookingSchema);

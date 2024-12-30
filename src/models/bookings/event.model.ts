@@ -1,7 +1,5 @@
 import mongoose, { Schema, model, Model } from "mongoose";
 import { EventSchema } from "../../types/model/bookings";
-import { BookingModel } from "./booking.model";
-import { SeatModel } from "./seat.model";
 import paginate from "mongoose-paginate-v2";
 
 const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
@@ -52,6 +50,10 @@ const eventSchema = new Schema<EventSchema, Model<EventSchema>>(
         from: Date,
         to: Date,
       },
+    },
+    seatId:{
+      type:Schema.Types.ObjectId,
+      ref:"Seat"
     },
     category: {
       type: Schema.Types.ObjectId,

@@ -88,22 +88,6 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
   //   url: uploadImage?.secure_url,
   //   public_id: uploadImage?.public_id,
   // },
-  const createdEvent = await EventModel.create({
-    title,
-    owner,
-    description,
-    location,
-    category: event_category?._id,
-    eventDate,
-    ticket_type,
-    price,
-    featured,
-    time: {
-      from,
-      to,
-    },
-    capacity,
-  });
 
   let seats = [];
 
@@ -114,12 +98,30 @@ const createEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     });
   }
 
-  await SeatModel.create({
+  let createdSeat = await SeatModel.create({
     seats: seats as Seat,
-    eventId: createdEvent._id,
   });
 
-  await createdEvent.save();
+  const createdEvent = await EventModel.create({
+    title,
+    owner,
+    description,
+    location,
+    category: event_category?._id,
+    eventDate,
+    ticket_type,
+    price,
+    featured,
+    seatId: createdSeat?._id,
+    time: {
+      from,
+      to,
+    },
+    capacity,
+  });
+
+  createdSeat.eventId = createdEvent._id;
+  await createdSeat.save();
 
   if (!createdEvent) {
     throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Internal server error");
@@ -197,7 +199,7 @@ const getEventsByCategory = asyncHandler(async (req: Request, res: Response) => 
 const getEventById = asyncHandler(async (req: Request, res: Response) => {
   const { eventId } = req.params;
 
-  const event = await EventModel.findOne({ _id: eventId }).populate("category owner").exec();
+  const event = await EventModel.findOne({ _id: eventId }).populate("category owner seatId").exec();
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event does not exist");
 

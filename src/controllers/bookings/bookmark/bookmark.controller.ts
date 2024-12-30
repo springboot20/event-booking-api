@@ -1,12 +1,11 @@
-import { Response } from 'express';
-import mongoose from 'mongoose';
-import { BookmarkModel, EventModel } from '../../../models/index';
-import { asyncHandler } from '../../../utils/asyncHandler';
-import { ApiError } from '../../../utils/api.error';
-import { ApiResponse } from '../../../utils/api.response';
-import { StatusCodes } from 'http-status-codes';
-import { CustomRequest } from '../../../types/index';
-import { withTransactions } from '../../../middlewares/transaction.middleware';
+import { Response } from "express";
+import { BookmarkModel, EventModel } from "../../../models/index";
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { ApiError } from "../../../utils/api.error";
+import { ApiResponse } from "../../../utils/api.response";
+import { StatusCodes } from "http-status-codes";
+import { CustomRequest } from "../../../types/index";
+import mongoose from "mongoose";
 
 export const getBookmark = async (userId: string) => {
   const userBookmark = await BookmarkModel.aggregate([
@@ -16,38 +15,38 @@ export const getBookmark = async (userId: string) => {
       },
     },
     {
-      $unwind: '$bookmarkItems',
+      $unwind: "$bookmarkItems",
     },
     {
       $lookup: {
-        from: 'events',
-        localField: 'bookmarkItems.event',
-        foreignField: '_id',
-        as: 'event',
+        from: "events",
+        localField: "bookmarkItems.event",
+        foreignField: "_id",
+        as: "event",
       },
     },
     {
       $project: {
-        event: { $first: '$event' },
-        ticket: '$bookmarkItems.ticket',
+        event: { $first: "$event" },
+        seats: "$bookmarkItems.seats",
       },
     },
     {
       $group: {
-        _id: '$_id',
+        _id: "$_id",
         bookmarkItems: {
-          $push: '$$ROOT',
+          $push: "$$ROOT",
         },
         totalBookmark: {
           $sum: {
-            $multiply: ['$event.price', '$ticket'],
+            $multiply: ["$event.price", "$seats.length"],
           },
         },
       },
     },
     {
       $addFields: {
-        totalBookmark: '$totalBookmark',
+        totalBookmark: "$totalBookmark",
       },
     },
   ]);
@@ -64,96 +63,88 @@ export const getBookmark = async (userId: string) => {
 export const getUserBookmark = asyncHandler(async (req: CustomRequest, res: Response) => {
   const userBookmark = await getBookmark(req.user?._id as string);
 
-  return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, 'bookmark fetched');
+  return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "bookmark fetched");
 });
 
-export const addEventToBookmark = asyncHandler(
-  withTransactions(async (req: CustomRequest, res: Response, session: mongoose.ClientSession) => {
-    const { eventId } = req.params;
-    const { ticket = 1 } = req.body;
+export const addEventToBookmark = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
+  const { seats = [] } = req.body;
 
-    const bookmark = await BookmarkModel.findOne({
-      markBy: req.user?._id,
+  const bookmark = await BookmarkModel.findOne({
+    markedBy: req.user?._id,
+  });
+
+  const event = await EventModel.findById(eventId);
+  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event not found");
+
+  if (seats.length > event.capacity) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      `only ${event.capacity} is remaining. But you board ${seats.length}. Event out of capacity`
+    );
+  }
+
+  const addedEvent = bookmark?.bookmarkItems?.find((e) => e.event.toString() === eventId);
+
+  if (addedEvent) {
+    for (let seat = 1; seat < seats.length; seat++) {
+      addedEvent?.seats?.push(seats[seat]);
+    }
+  } else {
+    bookmark?.bookmarkItems.push({
+      event: new mongoose.Types.ObjectId(eventId),
+      seats: [...seats],
     });
+  }
 
-    const event = await EventModel.findById(eventId).session(session);
-    if (!event) throw new ApiError(StatusCodes.NOT_FOUND, 'event not found');
+  await bookmark?.save({ validateBeforeSave: false });
 
-    if (ticket > event.capacity) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `only ${event.capacity} is remaining. But you board ${ticket}. Event out of capacity`
-      );
-    }
+  const userBookmark = await getBookmark(req.user?._id!);
 
-    const addedEvent = bookmark?.bookmarkItems?.find((e) => e.event.toString() === eventId);
+  return new ApiResponse(
+    StatusCodes.CREATED,
+    { bookmark: userBookmark },
+    "event added to bookmark"
+  );
+});
 
-    if (addedEvent) {
-      addedEvent.ticket = ticket;
-    } else {
-      bookmark?.bookmarkItems.push({
-        event: new mongoose.Types.ObjectId(eventId),
-        ticket,
-      });
-    }
+export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
 
-    await bookmark?.save({ validateBeforeSave: false, session });
+  const event = await EventModel.findById(eventId);
 
-    const userBookmark = await getBookmark(req.user?._id!);
+  if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event not found", []);
 
-    return new ApiResponse(
-      StatusCodes.CREATED,
-      { bookmark: userBookmark },
-      'event added to bookmark'
-    );
-  })
-);
-
-export const removeEventFromBookmark = asyncHandler(
-  withTransactions(async (req: CustomRequest, res: Response, session: mongoose.ClientSession) => {
-    const { eventId } = req.params;
-
-    const event = await EventModel.findById(eventId).session(session);
-
-    if (!event) throw new ApiError(StatusCodes.NOT_FOUND, 'event not found', []);
-
-    await BookmarkModel.findOneAndUpdate(
-      { markBy: req.user?._id },
-      {
-        $pull: {
-          bookmarkItems: {
-            event: new mongoose.Types.ObjectId(eventId),
-          },
+  await BookmarkModel.findOneAndUpdate(
+    { markBy: req.user?._id },
+    {
+      $pull: {
+        bookmarkItems: {
+          event: new mongoose.Types.ObjectId(eventId),
         },
       },
-      { new: true }
-    ).session(session);
+    },
+    { new: true }
+  );
 
-    const userBookmark = await getBookmark(req.user?._id as string);
+  const userBookmark = await getBookmark(req.user?._id as string);
 
-    return new ApiResponse(
-      StatusCodes.OK,
-      { bookmark: userBookmark },
-      'event removed from bookmark'
-    );
-  })
-);
+  return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "event removed from bookmark");
+});
 
-export const clearBookmark = asyncHandler(
-  withTransactions(async (req: CustomRequest, res: Response, session: mongoose.ClientSession) => {
-    await BookmarkModel.findOneAndUpdate(
-      { markBy: req.user?._id },
-      {
-        $set: {
-          bookmarkItems: [],
-        },
+export const clearBookmark = asyncHandler(async (req: CustomRequest, res: Response) => {
+  await BookmarkModel.findOneAndUpdate(
+    { markBy: req.user?._id },
+    {
+      $set: {
+        bookmarkItems: [],
       },
-      {
-        new: true,
-      }
-    );
-    const userBookmark = await getBookmark(req.user?._id as string);
+    },
+    {
+      new: true,
+    }
+  );
+  const userBookmark = await getBookmark(req.user?._id as string);
 
-    return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, 'bookmark cleared');
-  })
-);
+  return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "bookmark cleared");
+});
