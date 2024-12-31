@@ -7,72 +7,49 @@ import { StatusCodes } from "http-status-codes";
 import { Response } from "express";
 import { CustomRequest } from "../../../types/index";
 
-const seatPipeLineAggregation = (): mongoose.PipelineStage[] => {
-  return [
-    {
-      $lookup: {
-        from: "users",
-        foreignField: "_id",
-        localField: "reservedBy",
-        as: "reserver",
-        pipeline: [
-          {
-            $project: {
-              username: 1,
-              email: 1,
-              avatar: 1,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $lookup: {
-        from: "events",
-        foreignField: "_id",
-        localField: "event",
-        as: "event",
-        pipeline: [
-          {
-            $project: {
-              owner: 0,
-              location: 0,
-              capacity: 0,
-            },
-          },
-        ],
-      },
-    },
-    {
-      $addFields: {
-        associated_event: { $first: "$event" },
-      },
-    },
-  ];
-};
-
 const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { eventId } = req.params;
-  const { seat, reservedAt } = req.body;
+  const { seats, reservedAt } = req.body;
 
   const _seat = await SeatModel.findOne({
     eventId: new mongoose.Types.ObjectId(eventId),
   });
 
-  // check seat in seats
-  let isSeat = _seat?.seats.find((s) => s?._id?.toString() === seat);
+  if (!_seat) throw new ApiError(StatusCodes.NOT_FOUND, "seats not found", []);
 
-  if (!_seat || !isSeat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
+  const reservedSeats: any[] = [];
+  const unavailableSeats: any[] = [];
 
-  if (isSeat?.isReserved) return new ApiResponse(StatusCodes.CONFLICT, {}, "Seat already booked");
+  seats.forEach((s: string) => {
+    const seat = _seat.seats.find((_s) => _s?._id?.toString() === s);
 
-  isSeat.isReserved = true;
-  isSeat.reservedAt = reservedAt;
-  isSeat.reservedBy = new mongoose.Types.ObjectId(req?.user?._id!);
+    if (!seat) {
+      unavailableSeats.push(s);
+    } else if (seat.isReserved) {
+      unavailableSeats.push(s);
+    } else {
+      seat.isReserved = true;
+      seat.reservedAt = reservedAt;
+      seat.reservedBy = new mongoose.Types.ObjectId(req?.user?._id!);
 
-  await _seat.save();
+      reservedSeats.push(seat);
+    }
+  });
 
-  return new ApiResponse(StatusCodes.OK, {}, "seat booked successfully");
+  await _seat.save({ validateBeforeSave: true });
+
+  if (unavailableSeats.length > 0) {
+    return new ApiResponse(
+      StatusCodes.CONFLICT,
+      {
+        reservedSeats,
+        unavailableSeats,
+      },
+      "some seats could not be reserved"
+    );
+  }
+
+  return new ApiResponse(StatusCodes.OK, { reservedSeats }, "seat booked successfully");
 });
 
 const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Response) => {
@@ -104,11 +81,16 @@ const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Respon
 const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
   const userSeatsAggregate = await SeatModel.aggregate([
     {
-      $match: {
-        reservedBy: req.user!._id,
+      $set: {
+        seats: {
+          $filter: {
+            input: "$seats",
+            as: "seat",
+            cond: { $eq: ["$$seat.reservedBy", req?.user?._id] },
+          },
+        },
       },
     },
-    ...seatPipeLineAggregation(),
     {
       $sort: {
         updatedAt: -1,
@@ -116,11 +98,7 @@ const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res:
     },
   ]);
 
-  return new ApiResponse(
-    StatusCodes.OK,
-    { userSeats: userSeatsAggregate[0] },
-    "User events fetched"
-  );
+  return new ApiResponse(StatusCodes.OK, userSeatsAggregate[0], "user seats fetched");
 });
 
 export { reserveASeat, getAllAvailableSeats, fetchSeatAssociatedWithUser };

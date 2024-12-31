@@ -19,6 +19,7 @@ const bookmarkSchema = new Schema(
           },
         },
       ],
+      default: [],
     },
   },
   { timestamps: true }

@@ -23,14 +23,51 @@ export const getBookmark = async (userId: string) => {
         localField: "bookmarkItems.event",
         foreignField: "_id",
         as: "event",
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              price: 1,
+              description: 1,
+              image: 1,
+            },
+          },
+        ],
       },
     },
     {
-      $project: {
+      $addFields: {
         event: { $first: "$event" },
-        seats: "$bookmarkItems.seats",
-        totalSeats: {
-          $size: "$bookmarkItems.seats",
+      },
+    },
+    {
+      $lookup: {
+        from: "seats",
+        foreignField: "eventId",
+        localField: "bookmarkItems.event",
+        as: "seatData",
+      },
+    },
+    {
+      $unwind: "$seatData",
+    },
+    {
+      $addFields: {
+        bookedseats: {
+          $filter: {
+            input: "$seatData.seats",
+            as: "seat",
+            cond: {
+              $in: ["$$seat._id", "$bookmarkItems.seats"],
+            },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        totalBookedSeats: {
+          $size: "$bookedSeats",
         },
       },
     },
@@ -38,18 +75,16 @@ export const getBookmark = async (userId: string) => {
       $group: {
         _id: "$_id",
         bookmarkItems: {
-          $push: "$$ROOT",
+          $push: {
+            event: "$event",
+            seats: "$bookedseats",
+          },
         },
         totalBookmark: {
           $sum: {
-            $multiply: ["$event.price", "$totalSeats"],
+            $multiply: ["$event.price", "$totalBookedSeats"],
           },
         },
-      },
-    },
-    {
-      $project: {
-        totalSeats: 0,
       },
     },
     {
@@ -126,7 +161,7 @@ export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, r
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event not found", []);
 
   const bookmark = await BookmarkModel.findOneAndUpdate(
-    { markBy: req.user?._id },
+    { markedBy: req.user?._id },
     {
       $pull: {
         bookmarkItems: {
@@ -136,7 +171,7 @@ export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, r
     },
     { new: true }
   );
-  await bookmark?.save({ validateBeforeSave: false });
+  await bookmark?.save({ validateBeforeSave: true });
   const userBookmark = await getBookmark(req.user?._id as string);
 
   return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "event removed from bookmark");
