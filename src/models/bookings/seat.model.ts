@@ -9,21 +9,21 @@ const seatSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  reservedAt: {
+    type: Date,
+  },
+  reservedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 });
 
 const SeatSchema = new Schema(
   {
     seats: [seatSchema],
-    reservedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
     eventId: {
       type: Schema.Types.ObjectId,
       ref: "Event",
-    },
-    reservedAt: {
-      type: Date,
     },
   },
   { timestamps: true }

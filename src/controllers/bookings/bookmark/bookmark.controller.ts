@@ -125,19 +125,18 @@ export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, r
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event not found", []);
 
-  await BookmarkModel.findOneAndUpdate(
+  const bookmark = await BookmarkModel.findOneAndUpdate(
     { markBy: req.user?._id },
     {
       $pull: {
         bookmarkItems: {
-          event: new mongoose.Types.ObjectId(eventId),
-          seats: [],
+          event: eventId,
         },
       },
     },
     { new: true }
   );
-
+  await bookmark?.save({ validateBeforeSave: false });
   const userBookmark = await getBookmark(req.user?._id as string);
 
   return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "event removed from bookmark");

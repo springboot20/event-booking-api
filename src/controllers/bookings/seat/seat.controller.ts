@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { SeatModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
@@ -61,7 +60,6 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
   });
 
   // check seat in seats
-
   let isSeat = _seat?.seats.find((s) => s?._id?.toString() === seat);
 
   if (!_seat || !isSeat) throw new ApiError(StatusCodes.NOT_FOUND, "Seat not found", []);
@@ -69,7 +67,8 @@ const reserveASeat = asyncHandler(async (req: CustomRequest, res: Response) => {
   if (isSeat?.isReserved) return new ApiResponse(StatusCodes.CONFLICT, {}, "Seat already booked");
 
   isSeat.isReserved = true;
-  _seat.reservedAt = reservedAt;
+  isSeat.reservedAt = reservedAt;
+  isSeat.reservedBy = new mongoose.Types.ObjectId(req?.user?._id!);
 
   await _seat.save();
 

@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { EventModel, EventCategoryModel, SeatModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
 import { CustomRequest } from "../../../types/index";
@@ -16,6 +15,8 @@ import { aggreagetPaginate } from "../../../utils/helpers";
 type Seat = mongoose.Types.DocumentArray<{
   number: number;
   isReserved: boolean;
+  reservedAt?: Date;
+  reservedBy?: mongoose.Types.ObjectId;
 }>;
 
 const pipelineAggregation = (): mongoose.PipelineStage[] => {
