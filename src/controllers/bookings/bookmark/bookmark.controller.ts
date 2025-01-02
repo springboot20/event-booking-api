@@ -28,6 +28,7 @@ export const getBookmark = async (userId: string) => {
             $project: {
               _id: 1,
               price: 1,
+              title: 1,
               description: 1,
               image: 1,
             },
@@ -67,7 +68,7 @@ export const getBookmark = async (userId: string) => {
     {
       $addFields: {
         totalBookedSeats: {
-          $size: "$bookedSeats",
+          $size: "$bookedseats",
         },
       },
     },
@@ -127,22 +128,20 @@ export const addEventToBookmark = asyncHandler(async (req: CustomRequest, res: R
     );
   }
 
-  let newSeats = [...new Set([...seats])];
+  let newSeats = [...new Set([...seats])] as mongoose.Types.ObjectId[];
 
   const addedEvent = bookmark?.bookmarkItems?.find((e: any) => e.event.toString() === eventId);
 
   if (addedEvent) {
-    addedEvent.seats = newSeats;
+    addedEvent.seats = [...newSeats, ...addedEvent.seats] as mongoose.Types.ObjectId[];
   } else {
     bookmark?.bookmarkItems.push({
       event: new mongoose.Types.ObjectId(eventId),
       seats: newSeats,
     });
   }
-
-  console.log(addedEvent);
-
-  await bookmark?.save({ validateBeforeSave: false });
+  
+  await bookmark?.save({ validateBeforeSave: true });
 
   const userBookmark = await getBookmark(req.user?._id!);
 

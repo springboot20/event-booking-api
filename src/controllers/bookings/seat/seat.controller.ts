@@ -78,6 +78,27 @@ const getAllAvailableSeats = asyncHandler(async (req: CustomRequest, res: Respon
   );
 });
 
+const getSeatsByEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
+  const { eventId } = req.params;
+
+  const seats = await SeatModel.aggregate([
+    {
+      $match: {
+        eventId: new mongoose.Types.ObjectId(eventId),
+      },
+    },
+    {
+      $project: {
+        seats: 1,
+      },
+    },
+  ]);
+
+  if (!seats) throw new ApiError(StatusCodes.NOT_FOUND, "event seats does not exist");
+
+  return new ApiResponse(StatusCodes.OK, seats[0], "event fetched");
+});
+
 const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res: Response) => {
   const userSeatsAggregate = await SeatModel.aggregate([
     {
@@ -101,4 +122,4 @@ const fetchSeatAssociatedWithUser = asyncHandler(async (req: CustomRequest, res:
   return new ApiResponse(StatusCodes.OK, userSeatsAggregate[0], "user seats fetched");
 });
 
-export { reserveASeat, getAllAvailableSeats, fetchSeatAssociatedWithUser };
+export { reserveASeat, getAllAvailableSeats, fetchSeatAssociatedWithUser, getSeatsByEvent };

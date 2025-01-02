@@ -14,9 +14,13 @@ router.use(verifyJWT);
 
 router
   .route("/book-seat/:eventId")
-  .post(mongoParamsPathVariables("eventId"),   validate, controllers.reserveASeat);
+  .post(mongoParamsPathVariables("eventId"), validate, controllers.reserveASeat);
 
 router.route("/").get(controllers.getAllAvailableSeats);
+
+router
+  .route("/:eventId")
+  .get(mongoParamsPathVariables("eventId"), validate, controllers.getSeatsByEvent);
 
 router
   .route("/user-seat")

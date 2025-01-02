@@ -288,8 +288,8 @@ const updateEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Error occur while updating event document");
   }
 
-  await seat.save();
-  await updatedEvent.save();
+  await seat.save({ validateBeforeSave: true });
+  await updatedEvent.save({ validateBeforeSave: true });
 
   return new ApiResponse(StatusCodes.OK, updatedEvent, "Event updated");
 });
