@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { BookmarkModel, EventModel } from "../../../models/index";
+import { BookmarkModel, EventModel, SeatModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { ApiError } from "../../../utils/api.error";
 import { ApiResponse } from "../../../utils/api.response";
@@ -140,7 +140,7 @@ export const addEventToBookmark = asyncHandler(async (req: CustomRequest, res: R
       seats: newSeats,
     });
   }
-  
+
   await bookmark?.save({ validateBeforeSave: true });
 
   const userBookmark = await getBookmark(req.user?._id!);
@@ -159,19 +159,66 @@ export const removeEventFromBookmark = asyncHandler(async (req: CustomRequest, r
 
   if (!event) throw new ApiError(StatusCodes.NOT_FOUND, "event not found", []);
 
-  const bookmark = await BookmarkModel.findOneAndUpdate(
-    { markedBy: req.user?._id },
+  const bookmark = await BookmarkModel.findOne({
+    markedBy: req.user?._id,
+  });
+
+  if (!bookmark) throw new ApiError(StatusCodes.NOT_FOUND, "Bookmark not found for this event");
+
+  const bookmarkItem = bookmark?.bookmarkItems?.find(
+    (item: any) => item.event.toString() === eventId
+  );
+
+  if (!bookmark || !bookmarkItem?.seats.length) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "No seats found to found");
+  }
+
+  const seatIdsToRestore = bookmarkItem?.seats;
+
+  await SeatModel.updateMany(
+    {
+      eventId,
+      "seats._id": { $in: seatIdsToRestore },
+    },
+    {
+      $set: {
+        "seats.$[seat].isReserved": false,
+      },
+
+      $unset: {
+        "seats.$[seat].reservedBy": "",
+        "seats.$[seat].reservedAt": "",
+      },
+    },
+    {
+      arrayFilters: [
+        {
+          "seat._id": {
+            $in: seatIdsToRestore,
+          },
+        },
+      ],
+    }
+  );
+
+  const updatedBookmark = await BookmarkModel.findOneAndUpdate(
+    {
+      markedBy: req?.user?._id,
+    },
     {
       $pull: {
         bookmarkItems: {
           event: eventId,
         },
       },
-    },
-    { new: true }
+    }
   );
-  await bookmark?.save({ validateBeforeSave: true });
-  const userBookmark = await getBookmark(req.user?._id as string);
+
+  const userBookmark = {
+    _id: updatedBookmark?._id || null,
+    bookmarkItems: updatedBookmark?.bookmarkItems || [],
+    totalBookmark: 0,
+  };
 
   return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "event removed from bookmark");
 });
