@@ -32,7 +32,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   await user.save({ validateBeforeSave: false });
 
-  // // const verifyLink = `${req.protocol}://${req.get("host")}/api/v1/verify-email/${unHashedToken}`;
+  const verifyLink = `${process.env.EMAIL_CLIENT_VERIFICATION}/verify-email?id=${user?._id}&token=${unHashedToken}`;
 
   // // await sendMail(
   // //   user?.email,
@@ -56,7 +56,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   return new ApiResponse(
     StatusCodes.OK,
-    { user: createdUser },
+    { user: createdUser, email_url: verifyLink },
     "User registration successfull and verification email has been sent to you email"
   );
 });

@@ -52,11 +52,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // APP API ROUTES
-app.use("/api/v1/auth", routes.authRoutes.router);
-app.use("/api/v1/events", routes.eventRoutes.router);
-app.use("/api/v1/seats", routes.seatRoutes.router);
-app.use("/api/v1/bookmarks", routes.bookmarkRoutes.router);
-app.use("/api/v1/categories", routes.categoryRoutes.router);
+app.use("/api/v1/bookings/auth", routes.authRoutes.router);
+app.use("/api/v1/bookings/profile", routes.profileRoutes.router);
+app.use("/api/v1/bookings/events", routes.eventRoutes.router);
+app.use("/api/v1/bookings/seats", routes.seatRoutes.router);
+app.use("/api/v1/bookings/bookmarks", routes.bookmarkRoutes.router);
+app.use("/api/v1/bookings/categories", routes.categoryRoutes.router);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -25,11 +25,8 @@ router
   .post(userForgotPasswordValidator(), validate, controllers.forgotPassword);
 
 router
-  .route("/verify-email/:id/:token")
+  .route("/verify-email/")
   .post(
-    mongoParamsPathVariables("id"),
-    mongoParamsPathVariables("token"),
-    validate,
     controllers.verifyEmail
   );
 
@@ -41,17 +38,15 @@ router.route("/logout").post(verifyJWT, controllers.logout);
 
 router.route("/resend-email-verification").post(verifyJWT, controllers.resendEmailVerification);
 
-router.route("/change-current-password").post(verifyJWT, controllers.changeCurrentPassword);
+router.route("/change-current-password").put(verifyJWT, controllers.changeCurrentPassword);
 
-router
-  .route("/reset-forgotten-password/:resetToken")
-  .post(mongoParamsPathVariables("resetToken"), validate, verifyJWT, controllers.resetPassword);
+router.route("/reset-forgotten-password").post(verifyJWT, controllers.resetPassword);
 
 router.route("/current-user").get(verifyJWT, controllers.getCurrentUser);
 router.route("/refresh-access-token").post(controllers.refreshAccessToken);
 
 router
   .route("/upload-avatar")
-  .patch(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar);
+  .put(verifyJWT, upload.single("avatar"), controllers.updateUserAvatar);
 
 export { router };

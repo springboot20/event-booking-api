@@ -14,7 +14,7 @@ import {
 } from "../../../configs/cloudinary.config";
 
 export const resetPassword = asyncHandler(async (req: CustomRequest, res: Response) => {
-  const { resetToken } = req.params;
+  const { resetToken } = req.query;
   const { newPassword } = req.body;
 
   const user = await UserModel.findOne({
@@ -28,7 +28,10 @@ export const resetPassword = asyncHandler(async (req: CustomRequest, res: Respon
     throw new ApiError(StatusCodes.NOT_FOUND, "Token is invalid or expired", []);
   }
 
-  const validToken = await bcrypt.compare(resetToken, user?.forgotPasswordToken!);
+  const validToken = await bcrypt.compare(
+    typeof resetToken === "string" ? resetToken : "",
+    user?.forgotPasswordToken!
+  );
 
   if (!validToken)
     throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset password token provided");

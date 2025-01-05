@@ -1,8 +1,9 @@
-import { Schema, model, Error, Model } from 'mongoose';
-import bcrypt from 'bcrypt';
-import { AvailableSocialLogin, UserLoginType } from '../../constants/constants';
-import { ROLE, UserSchema } from '../../types/model/user';
-import { BookmarkModel } from '../bookings/bookmark.model';
+import { Schema, model, Error, Model } from "mongoose";
+import bcrypt from "bcrypt";
+import { AvailableSocialLogin, UserLoginType } from "../../constants/constants";
+import { ROLE, UserSchema } from "../../types/model/user";
+import { BookmarkModel } from "../bookings/bookmark.model";
+import { ProfileModel } from "./profile.model";
 
 const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   avatar: {
@@ -46,8 +47,8 @@ const userSchema = new Schema<UserSchema, Model<UserSchema>>({
   },
 });
 
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
   try {
     const salt = await bcrypt.genSalt(10);
@@ -60,13 +61,25 @@ userSchema.pre('save', async function (next) {
   }
 });
 
-userSchema.post('save', async function (user, next) {
+userSchema.post("save", async function (user, next) {
   try {
     await BookmarkModel.findOneAndUpdate(
       { markedBy: user._id },
       {
         $setOnInsert: {
           bookmarkItems: [],
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    await ProfileModel.findOneAndUpdate(
+      {
+        user: user?._id,
+      },
+      {
+        $setOnInsert: {
+          user: user?._id,
         },
       },
       { upsert: true, new: true }
@@ -82,5 +95,5 @@ userSchema.methods.comparePasswords = function (enteredPassword: string) {
   return bcrypt.compareSync(enteredPassword, this.password);
 };
 
-const UserModel = model<UserSchema>('User', userSchema);
+const UserModel = model<UserSchema>("User", userSchema);
 export { UserModel };

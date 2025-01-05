@@ -1,15 +1,15 @@
-import { UserModel } from '../../../models/index';
-import { asyncHandler } from '../../../utils/asyncHandler';
-import { withTransactions } from '../../../middlewares/transaction.middleware';
-import { ApiError } from '../../../utils/api.error';
-import { generateTemporaryToken } from '../../../utils/helpers';
-import { ApiResponse } from '../../../utils/api.response';
-import { StatusCodes } from 'http-status-codes';
-import { sendMail } from '../../../service/email.service';
-import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-import { CustomRequest } from 'src/types';
-import bcrypt from 'bcrypt';
+import { UserModel } from "../../../models/index";
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { withTransactions } from "../../../middlewares/transaction.middleware";
+import { ApiError } from "../../../utils/api.error";
+import { generateTemporaryToken } from "../../../utils/helpers";
+import { ApiResponse } from "../../../utils/api.response";
+import { StatusCodes } from "http-status-codes";
+import { sendMail } from "../../../service/email.service";
+import { Request, Response } from "express";
+import mongoose from "mongoose";
+import { CustomRequest } from "src/types";
+import bcrypt from "bcrypt";
 
 export const forgotPassword = asyncHandler(
   withTransactions(async (req: Request, res: Response, session: mongoose.mongo.ClientSession) => {
@@ -17,7 +17,7 @@ export const forgotPassword = asyncHandler(
     const user = await UserModel.findOne({ email });
 
     if (!user) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'user does not exists', []);
+      throw new ApiError(StatusCodes.NOT_FOUND, "user does not exists", []);
     }
 
     const { unHashedToken, hashedToken, tokenExpiry } = await generateTemporaryToken();
@@ -27,46 +27,48 @@ export const forgotPassword = asyncHandler(
 
     await user.save({ validateBeforeSave: false, session });
 
-    const resetLink = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${
+    const resetLink = `${req.protocol}://${req.get("host")}/api/v1/auth/reset-password/${
       user._id
     }/${unHashedToken}`;
 
     await sendMail(
       user?.email,
-      'Password reset request',
+      "Password reset request",
       { resetLink, username: user?.username },
-      'resetPasswordTemplate'
+      "resetPasswordTemplate"
     );
 
     return new ApiResponse(
       StatusCodes.OK,
       {},
-      'password reset link successfully sent to your email'
+      "password reset link successfully sent to your email"
     );
   })
 );
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
-  const { id, token } = req.params;
-
+  const { id, token } = req.query;
+  console.log({ id, token });
   if (!token) {
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'verification token is missing', []);
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "verification token is missing", []);
   }
 
   const user = await UserModel.findOne({
     _id: id,
-    emailVerificationExpiry: { $gte: Date.now() },
   })!;
 
   console.log(user);
 
   if (!user)
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'unable to verify user, token invalid or expired');
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "unable to verify user, token invalid or expired");
 
-  const validToken = await bcrypt.compare(token, user?.emailVerificationToken!);
+  const validToken = await bcrypt.compare(
+    typeof token === "string" ? token : "",
+    user?.emailVerificationToken!
+  );
 
   if (!validToken)
-    throw new ApiError(StatusCodes.UNAUTHORIZED, 'Invalid reset password token provided');
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset password token provided");
 
   user.emailVerificationToken = undefined;
   user.emailVerificationExpiry = undefined;
@@ -75,19 +77,19 @@ export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
 
   await user.save({ validateBeforeSave: false });
 
-  return new ApiResponse(StatusCodes.OK, { isEmailVerified: true }, 'Email verified');
+  return new ApiResponse(StatusCodes.OK, { isEmailVerified: true }, "Email verified");
 });
 
 export const resendEmailVerification = asyncHandler(
   async (req: CustomRequest, res: Response, session: mongoose.mongo.ClientSession) => {
-    const user = await UserModel.findById(req['user']!._id);
+    const user = await UserModel.findById(req["user"]!._id);
 
     if (!user) {
-      throw new ApiError(StatusCodes.NOT_FOUND, 'user does not exists', []);
+      throw new ApiError(StatusCodes.NOT_FOUND, "user does not exists", []);
     }
 
     if (user.isEmailVerified) {
-      throw new ApiError(StatusCodes.CONFLICT, 'user email has already been verified', []);
+      throw new ApiError(StatusCodes.CONFLICT, "user email has already been verified", []);
     }
 
     const { unHashedToken, hashedToken, tokenExpiry } = await generateTemporaryToken();
@@ -97,14 +99,14 @@ export const resendEmailVerification = asyncHandler(
 
     await user.save({ validateBeforeSave: false, session });
 
-    const verifyLink = `${req.protocol}://${req.get('host')}/api/v1/verify-email/${unHashedToken}`;
+    const verifyLink = `${req.protocol}://${req.get("host")}/api/v1/verify-email/${unHashedToken}`;
 
     await sendMail(
       user?.email,
-      'Email verification',
+      "Email verification",
       { username: user?.username, verificationLink: verifyLink },
-      'emailVerificationTemplate'
+      "emailVerificationTemplate"
     );
-    return new ApiResponse(StatusCodes.OK, {}, 'Email verfication resent successfully');
+    return new ApiResponse(StatusCodes.OK, {}, "Email verfication resent successfully");
   }
 );
