@@ -62,6 +62,8 @@ userSchema.pre("save", async function (next) {
 });
 
 userSchema.post("save", async function (user, next) {
+  const userProfile = await ProfileModel.findOne({ user: user?._id });
+
   try {
     await BookmarkModel.findOneAndUpdate(
       { markedBy: user._id },
@@ -73,17 +75,11 @@ userSchema.post("save", async function (user, next) {
       { upsert: true, new: true }
     );
 
-    await ProfileModel.findOneAndUpdate(
-      {
-        user: user?._id,
-      },
-      {
-        $setOnInsert: {
-          user: user?._id,
-        },
-      },
-      { upsert: true, new: true }
-    );
+    if (!userProfile) {
+      await ProfileModel.create({
+        user: user._id,
+      });
+    }
 
     next();
   } catch (error: any) {

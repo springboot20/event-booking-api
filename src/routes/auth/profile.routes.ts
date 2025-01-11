@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.use(verifyJWT);
 
-router.route("/").patch(controllers.updateUserProfile).get(controllers.getUserProfile);
+router.route("/").put(controllers.updateUserProfile).get(controllers.getUserProfile);
 
 export { router };

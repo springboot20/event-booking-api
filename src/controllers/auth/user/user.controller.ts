@@ -95,13 +95,13 @@ export const getCurrentUser = asyncHandler(async (req: CustomRequest, res: Respo
 export const changeCurrentPassword = asyncHandler(async (req: CustomRequest, res: Response) => {
   let { existingPassword, newPassword } = req.body;
 
-  const user = await UserModel.findById(req["user"]!._id);
+  const user = await UserModel.findById(req?.user?._id);
 
   if (!user) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "ser not found", []);
+    throw new ApiError(StatusCodes.NOT_FOUND, "user not found", []);
   }
 
-  let isPasswordValid = isPasswordCorrect(existingPassword, user.password);
+  let isPasswordValid = await isPasswordCorrect(existingPassword, user?.password);
 
   if (!isPasswordValid) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Existing password does not matched");

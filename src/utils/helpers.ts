@@ -34,8 +34,12 @@ const removeUnusedMulterImageFilesOnError = (req: Request) => {
   }
 };
 
-const isPasswordCorrect = async function (enteredPassword: string, password: string) {
-  return await bcrypt.compare(enteredPassword, password);
+const isPasswordCorrect = async function (enteredPassword: string, password: string | undefined) {
+
+  console.log(enteredPassword)
+  console.log(password)
+
+  return await bcrypt.compare(enteredPassword, password as string);
 };
 
 const generateTemporaryToken = () => {

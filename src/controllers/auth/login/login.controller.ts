@@ -11,11 +11,13 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await UserModel.findOne({ email });
 
+  
   if (!email && !password) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "Please provide email and password", []);
   }
+  console.log(user?.password);
 
-  const isPasswordValid = await isPasswordCorrect(password, user!.password);
+  const isPasswordValid = await isPasswordCorrect(password, user?.password);
 
   if (!isPasswordValid) {
     throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid password, try again", []);

@@ -51,6 +51,8 @@ export const updateUserProfile = asyncHandler(async (req: CustomRequest, res: Re
     { new: true }
   );
 
+  await userProfile!.save({ validateBeforeSave: true });
+
   if (!userProfile)
     throw new ApiError(
       StatusCodes.INTERNAL_SERVER_ERROR,
