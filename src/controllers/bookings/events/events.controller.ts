@@ -319,7 +319,7 @@ const deleteEvent = asyncHandler(async (req: CustomRequest, res: Response) => {
     throw new ApiError(StatusCodes.NOT_FOUND, "event does not exists");
   }
 
-  return new ApiResponse(StatusCodes.OK, {}, "event deledted successfully");
+  return new ApiResponse(StatusCodes.OK, {}, "event deleted successfully");
 });
 
 export {
