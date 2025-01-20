@@ -32,7 +32,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   await user.save({ validateBeforeSave: false });
 
-  const verifyLink = `${process.env.EMAIL_CLIENT_VERIFICATION}/verify-email?id=${user?._id}&token=${unHashedToken}`;
+  const verificationLink =
+    process.env.NODE_ENV === "production"
+      ? process.env.EMAIL_CLIENT_VERIFICATION
+      : process.env.EMAIL_CLIENT_VERIFICATION_LOCAL;
+
+  const verifyLink = `${verificationLink}/verify-email?id=${user?._id}&token=${unHashedToken}`;
 
   // // await sendMail(
   // //   user?.email,
