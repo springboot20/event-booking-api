@@ -21,7 +21,7 @@ router.route("/register").post(controllers.register);
 router.route("/login").post(userLoginValidator(), validate, controllers.login);
 
 router
-  .route("/forgot-password/")
+  .route("/forgot-password")
   .post(userForgotPasswordValidator(), validate, controllers.forgotPassword);
 
 router
@@ -29,6 +29,7 @@ router
   .post(
     controllers.verifyEmail
   );
+  router.route("/reset-forgotten-password").post( controllers.resetPassword);
 
 /**
  * PROTECTED ROUTES
@@ -40,7 +41,6 @@ router.route("/resend-email-verification").post(verifyJWT, controllers.resendEma
 
 router.route("/change-current-password").put(verifyJWT, controllers.changeCurrentPassword);
 
-router.route("/reset-forgotten-password").post(verifyJWT, controllers.resetPassword);
 
 router.route("/current-user").get(verifyJWT, controllers.getCurrentUser);
 router.route("/refresh-access-token").post(controllers.refreshAccessToken);

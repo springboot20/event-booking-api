@@ -7,7 +7,6 @@ import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { sendMail } from "../../../service/email.service";
 import { Request, Response } from "express";
-import mongoose from "mongoose";
 import { CustomRequest } from "src/types";
 import bcrypt from "bcrypt";
 
@@ -20,21 +19,26 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
     throw new ApiError(StatusCodes.NOT_FOUND, "user does not exists", []);
   }
 
-  const { unHashedToken, hashedToken, tokenExpiry } = await generateTemporaryToken();
+  const { unHashedToken, hashedToken, tokenExpiry } = generateTemporaryToken();
 
-  user.emailVerificationToken = hashedToken;
-  user.emailVerificationExpiry = tokenExpiry;
+  user.forgotPasswordToken = hashedToken;
+  user.forgotPasswordExpiry = tokenExpiry;
 
   await user.save({ validateBeforeSave: false });
 
-  const resetLink = `${process.env.EMAIL_CLIENT_VERIFICATION}/reset-password/${unHashedToken}`;
+  const vericationLink =
+    process.env.NODE_ENV === "production"
+      ? process.env.EMAIL_CLIENT_VERIFICATION
+      : process.env.EMAIL_CLIENT_VERIFICATION_LOCAL;
 
-  await sendMail(
-    user?.email,
-    "Password reset request",
-    { resetLink, username: user?.username },
-    "resetPasswordTemplate"
-  );
+  const resetLink = `${vericationLink}/reset-password?resetToken=${unHashedToken}`;
+
+  // await sendMail(
+  //   user?.email,
+  //   "Password reset request",
+  //   { resetLink, username: user?.username },
+  //   "resetPasswordTemplate"
+  // );
 
   return new ApiResponse(
     StatusCodes.OK,

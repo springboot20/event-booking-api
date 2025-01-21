@@ -1,37 +1,36 @@
 import { UserModel } from "../../../models/index";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { withTransactions } from "../../../middlewares/transaction.middleware";
 import { ApiError } from "../../../utils/api.error";
 import { isPasswordCorrect } from "../../../utils/helpers";
 import { ApiResponse } from "../../../utils/api.response";
 import { StatusCodes } from "http-status-codes";
 import { CustomRequest } from "../../../types/index";
-import bcrypt from "bcrypt";
 import { Response } from "express";
 import {
   deleteFileFromCloudinary,
   uploadFileToCloudinary,
 } from "../../../configs/cloudinary.config";
+import { validateToken } from "../../../utils/helpers";
 
 export const resetPassword = asyncHandler(async (req: CustomRequest, res: Response) => {
   const { resetToken } = req.query;
-  const { newPassword } = req.body;
+  const { newPassword, email } = req.body;
 
-  const user = await UserModel.findOne({
-    _id: req?.user?._id,
-    forgotPasswordExpiry: {
-      $gte: Date.now(),
-    },
-  });
+  const user = await UserModel.findOne({ email });
+
+  console.log(user);
+  console.log(user?.forgotPasswordToken);
 
   if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, "Token is invalid or expired", []);
   }
 
-  const validToken = await bcrypt.compare(
+  const validToken = validateToken(
     typeof resetToken === "string" ? resetToken : "",
-    user?.forgotPasswordToken!
+    user?.forgotPasswordToken as string
   );
+
+  console.log(validToken);
 
   if (!validToken)
     throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid reset password token provided");

@@ -42,6 +42,14 @@ const isPasswordCorrect = async function (enteredPassword: string, password: str
   return await bcrypt.compare(enteredPassword, password as string);
 };
 
+export const validateToken = async function (enteredToken: string, token: string | undefined) {
+
+  console.log(enteredToken)
+  console.log(token)
+
+  return await bcrypt.compare(enteredToken, token as string);
+};
+
 const generateTemporaryToken = () => {
   const unHashedToken = crypto.randomBytes(10).toString("hex");
 
