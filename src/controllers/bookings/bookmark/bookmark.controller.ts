@@ -239,3 +239,4 @@ export const clearBookmark = asyncHandler(async (req: CustomRequest, res: Respon
 
   return new ApiResponse(StatusCodes.OK, { bookmark: userBookmark }, "bookmark cleared");
 });
+ 
