@@ -9,14 +9,24 @@ import passport from "passport";
 import expressSession from "express-session";
 import cookieParser from "cookie-parser";
 import http from "http";
+import { Server } from "socket.io";
 
 import { errorHandler } from "./middlewares/error.middleware";
 import { connectToDatabase } from "./db/connection";
+import { initializeSocketIo } from "./socketio/socketio";
 import * as routes from "./routes/index";
 
 const app = express();
 const PORT = process.env.PORT ?? 4040;
 const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  },
+});
+
+initializeSocketIo(io);
 
 mongoose.connection.on("connected", () => {
   console.log("Mongodb connected ....");
@@ -38,11 +48,12 @@ app.use(
 );
 
 app.use(cookieParser(process.env.EXPRESS_SESSION_SECRET));
+app.set("io", io);
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
+    origin: true,
+    // credentials: true,
   })
 );
 app.use(passport.initialize());
@@ -60,9 +71,9 @@ app.use("/api/v1/bookings/bookmarks", routes.bookmarkRoutes.router);
 app.use("/api/v1/bookings/categories", routes.categoryRoutes.router);
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN as string);
+  res.setHeader("Access-Control-Allow-Headers", process.env.CORS_ORIGIN as string);
+  res.setHeader("Access-Control-Allow-Methods", "*");
 
   next();
 });
